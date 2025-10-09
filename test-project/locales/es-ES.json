@@ -1,0 +1,10 @@
+{
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "No hay mensajes nuevos en el cofre.",
+      "=1": "¡Ahoy! Tienes {count} mensaje nuevo en el cofre.",
+      ">1": "¡Ahoy! Tienes {count} mensajes nuevos en el cofre."
+    },
+    "docsButton": "Un botón que apunta al mapa del tesoro técnico."
+  }
+}

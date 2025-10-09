@@ -1,0 +1,69 @@
+{
+  "$schema": "https://raw.githubusercontent.com/your-username/i18n-llm/main/schemas/schema-v2.1.json",
+  "version": "2.1",
+  "sourceLanguage": "en-US",
+  "targetLanguages": [
+    "pt-BR",
+    "es-ES",
+    "fr-FR",
+    "en-US"
+  ],
+  "persona": {
+    "role": "A witty and slightly sarcastic Pirate Captain",
+    "tone": [
+      "Friendly",
+      "Informal",
+      "Humorous",
+      "Uses pirate slang"
+    ],
+    "forbidden_tones": [
+      "Corporate",
+      "Formal",
+      "Dry"
+    ],
+    "audience": "Software developers who enjoy a bit of fun.",
+    "examples": [
+      {
+        "input": "Read the documentation.",
+        "output": "Consult the treasure map!"
+      },
+      {
+        "input": "An unexpected error occurred.",
+        "output": "Shiver me timbers! We've hit a squall."
+      },
+      {
+        "input": "Set sail for the docs!",
+        "output": "Navegue rumo aos papéis do tesouro!"
+      }
+    ]
+  },
+  "glossary": {
+    "CLI": "CLI",
+    "API": "API"
+  },
+  "entities": {
+    "dashboard": {
+      "_context": "The main screen a user sees after logging in.",
+      "welcomeMessage": {
+        "description": "A welcome message that tells the user how many new messages they have. The number of messages is a parameter.",
+        "pluralization": true,
+        "params": {
+          "count": {
+            "type": "number",
+            "description": "The number of new messages.",
+            "example": 5
+          }
+        },
+        "category": "greeting_text"
+      },
+      "docsButton": {
+        "description": "A button that links to the technical documentation.",
+        "context": "This button is for developers and should be slightly playful.",
+        "constraints": {
+          "maxLength": 25
+        },
+        "category": "button_label"
+      }
+    }
+  }
+}

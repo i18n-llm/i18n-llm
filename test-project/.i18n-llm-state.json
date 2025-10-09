@@ -1,0 +1,22 @@
+{
+  "version": "2.1",
+  "lastGenerated": "2025-10-09T23:26:34.615Z",
+  "translations": {
+    "dashboard.welcomeMessage.=0": {
+      "hash": "c7198e4b",
+      "schemaHash": "0bebd078"
+    },
+    "dashboard.welcomeMessage.=1": {
+      "hash": "f64af5a8",
+      "schemaHash": "0bebd078"
+    },
+    "dashboard.welcomeMessage.>1": {
+      "hash": "73452d2f",
+      "schemaHash": "0bebd078"
+    },
+    "dashboard.docsButton": {
+      "hash": "9a457074",
+      "schemaHash": "b902467f"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "i18n-llm-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^24.7.0"
+  }
+}
