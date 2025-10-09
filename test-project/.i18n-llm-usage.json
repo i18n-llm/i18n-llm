@@ -1,0 +1,51 @@
+{
+  "records": [
+    {
+      "timestamp": "2025-10-09T23:53:51.123Z",
+      "operation": "review",
+      "model": "gpt-4.1-mini",
+      "language": "pt-BR",
+      "inputTokens": 636,
+      "outputTokens": 76,
+      "totalTokens": 712,
+      "estimatedCost": 0.00014099999999999998
+    },
+    {
+      "timestamp": "2025-10-09T23:53:52.001Z",
+      "operation": "review",
+      "model": "gpt-4.1-mini",
+      "language": "pt-BR",
+      "inputTokens": 640,
+      "outputTokens": 30,
+      "totalTokens": 670,
+      "estimatedCost": 0.000114
+    },
+    {
+      "timestamp": "2025-10-09T23:53:52.789Z",
+      "operation": "review",
+      "model": "gpt-4.1-mini",
+      "language": "pt-BR",
+      "inputTokens": 641,
+      "outputTokens": 30,
+      "totalTokens": 671,
+      "estimatedCost": 0.00011415
+    },
+    {
+      "timestamp": "2025-10-09T23:53:53.568Z",
+      "operation": "review",
+      "model": "gpt-4.1-mini",
+      "language": "pt-BR",
+      "inputTokens": 632,
+      "outputTokens": 30,
+      "totalTokens": 662,
+      "estimatedCost": 0.00011279999999999999
+    }
+  ],
+  "totals": {
+    "requests": 4,
+    "inputTokens": 2549,
+    "outputTokens": 166,
+    "totalTokens": 2715,
+    "estimatedCost": 0.00048195
+  }
+}

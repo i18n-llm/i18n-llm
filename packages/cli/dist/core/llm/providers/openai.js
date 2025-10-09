@@ -1,7 +1,52 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OpenAIProvider = void 0;
 const openai_1 = require("openai");
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
+// Preços por 1M tokens (atualizado para gpt-4.1-mini)
+const MODEL_PRICING = {
+    'gpt-4.1-mini': { input: 0.15, output: 0.60 },
+    'gpt-4.1-nano': { input: 0.10, output: 0.40 },
+    'gpt-4o': { input: 2.50, output: 10.00 },
+    'gpt-4o-mini': { input: 0.15, output: 0.60 },
+    'gpt-4-turbo': { input: 10.00, output: 30.00 },
+    'gpt-4': { input: 30.00, output: 60.00 },
+    'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
+};
 function buildPersonaPrompt(persona) {
     if (!persona)
         return 'Standard professional and clear.';
@@ -25,6 +70,7 @@ class OpenAIProvider {
     constructor(apiKey, model = 'gpt-4.1-mini') {
         this.client = new openai_1.OpenAI({ apiKey });
         this.model = model;
+        this.usagePath = path.resolve(process.cwd(), '.i18n-llm-usage.json');
     }
     cleanTranslationKeys(obj) {
         if (typeof obj !== 'object' || obj === null) {
@@ -35,13 +81,48 @@ class OpenAIProvider {
         }
         const cleaned = {};
         for (const [key, value] of Object.entries(obj)) {
-            // Remove TODOS os espaços em branco E caracteres de controle Unicode das chaves
-            // Isso corrige "\u000b>1", "\u0003>1", " >1" para ">1"
             let cleanedKey = key.trim();
             cleanedKey = cleanedKey.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
             cleaned[cleanedKey] = this.cleanTranslationKeys(value);
         }
         return cleaned;
+    }
+    calculateCost(inputTokens, outputTokens) {
+        const pricing = MODEL_PRICING[this.model] || MODEL_PRICING['gpt-4.1-mini'];
+        const inputCost = (inputTokens / 1000000) * pricing.input;
+        const outputCost = (outputTokens / 1000000) * pricing.output;
+        return inputCost + outputCost;
+    }
+    saveUsage(record) {
+        try {
+            let history = {
+                records: [],
+                totals: {
+                    requests: 0,
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    totalTokens: 0,
+                    estimatedCost: 0,
+                }
+            };
+            // Carregar histórico existente
+            if (fs.existsSync(this.usagePath)) {
+                history = JSON.parse(fs.readFileSync(this.usagePath, 'utf-8'));
+            }
+            // Adicionar novo registro
+            history.records.push(record);
+            // Atualizar totais
+            history.totals.requests++;
+            history.totals.inputTokens += record.inputTokens;
+            history.totals.outputTokens += record.outputTokens;
+            history.totals.totalTokens += record.totalTokens;
+            history.totals.estimatedCost += record.estimatedCost;
+            // Salvar
+            fs.writeFileSync(this.usagePath, JSON.stringify(history, null, 2), 'utf-8');
+        }
+        catch (error) {
+            console.warn('⚠️  Could not save usage data:', error);
+        }
     }
     async translate(params) {
         const { sourceText, sourceLanguage, targetLanguage, persona, glossary, context, category, isPlural, params: textParams, constraints, } = params;
@@ -113,11 +194,26 @@ class OpenAIProvider {
             if (!content) {
                 throw new Error('API returned empty content.');
             }
+            // Capturar usage
+            const usage = response.usage;
+            if (usage) {
+                const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
+                const record = {
+                    timestamp: new Date().toISOString(),
+                    operation: 'translate',
+                    model: this.model,
+                    language: targetLanguage,
+                    inputTokens: usage.prompt_tokens,
+                    outputTokens: usage.completion_tokens,
+                    totalTokens: usage.total_tokens,
+                    estimatedCost: cost,
+                };
+                this.saveUsage(record);
+                console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
+            }
             let jsonResponse = JSON.parse(content);
-            // Aplicar limpeza das chaves para remover caracteres Unicode indesejados
             jsonResponse = this.cleanTranslationKeys(jsonResponse);
             if (isPlural) {
-                // Remover a chave 'other' se existir
                 if (jsonResponse.other) {
                     delete jsonResponse.other;
                 }
@@ -174,6 +270,23 @@ class OpenAIProvider {
             const content = response.choices[0].message.content;
             if (!content) {
                 throw new Error('API returned empty content.');
+            }
+            // Capturar usage
+            const usage = response.usage;
+            if (usage) {
+                const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
+                const record = {
+                    timestamp: new Date().toISOString(),
+                    operation: 'review',
+                    model: this.model,
+                    language,
+                    inputTokens: usage.prompt_tokens,
+                    outputTokens: usage.completion_tokens,
+                    totalTokens: usage.total_tokens,
+                    estimatedCost: cost,
+                };
+                this.saveUsage(record);
+                console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
             }
             return JSON.parse(content);
         }

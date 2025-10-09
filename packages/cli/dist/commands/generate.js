@@ -57,12 +57,30 @@ function generateSchemaHash(schemaValue, persona, glossary) {
     });
     return generateHash(content);
 }
+function loadUsageTotals() {
+    try {
+        const usagePath = path.resolve(process.cwd(), '.i18n-llm-usage.json');
+        if (fs.existsSync(usagePath)) {
+            const usage = JSON.parse(fs.readFileSync(usagePath, 'utf-8'));
+            return {
+                requests: usage.totals?.requests || 0,
+                cost: usage.totals?.estimatedCost || 0,
+            };
+        }
+    }
+    catch (error) {
+        // Ignorar erros
+    }
+    return { requests: 0, cost: 0 };
+}
 exports.generateCommand = new commander_1.Command('generate')
     .description('Generate translations based on the schema')
     .option('-f, --force', 'Force regeneration of all translations, ignoring cache')
     .action(async (options) => {
     try {
         console.log('🚀 Starting translation generation...\n');
+        // Capturar totais antes da execução
+        const beforeUsage = loadUsageTotals();
         const configPath = path.resolve(process.cwd(), 'i18n-llm.config.js');
         if (!fs.existsSync(configPath)) {
             console.error('❌ Config file not found: i18n-llm.config.js');
@@ -126,9 +144,23 @@ exports.generateCommand = new commander_1.Command('generate')
         fs.writeFileSync(statePath, JSON.stringify(newState, null, 2), 'utf-8');
         console.log(`\n💾 State saved: ${statePath}`);
         console.log('\n✨ Translation generation complete!');
+        // Mostrar relatório de custo
+        const afterUsage = loadUsageTotals();
+        const requestsThisRun = afterUsage.requests - beforeUsage.requests;
+        const costThisRun = afterUsage.cost - beforeUsage.cost;
+        if (requestsThisRun > 0) {
+            console.log('\n📊 Usage Report:');
+            console.log(`   This run: $${costThisRun.toFixed(4)} (${requestsThisRun} requests)`);
+            console.log(`   Total accumulated: $${afterUsage.cost.toFixed(4)} (${afterUsage.requests} requests)`);
+        }
     }
     catch (error) {
         console.error('❌ Generation failed:', error);
+        // Mostrar custo mesmo em caso de erro
+        const afterUsage = loadUsageTotals();
+        if (afterUsage.requests > 0) {
+            console.log(`\n💰 Accumulated cost: $${afterUsage.cost.toFixed(4)} (${afterUsage.requests} requests)`);
+        }
         process.exit(1);
     }
 });
@@ -144,7 +176,7 @@ async function processEntity(entity, output, path, targetLanguage, sourceLanguag
             if (value.pluralization) {
                 const existingPlural = existingTranslations[key];
                 const firstPluralPath = `${currentPath}.=0`;
-                const oldStateEntry = oldState.translations[firstPluralPath];
+                const oldStateEntry = oldState.translations ? oldState.translations[firstPluralPath] : undefined;
                 // Verificar se precisa re-traduzir (verifica apenas uma vez)
                 const needsTranslation = !existingPlural ||
                     !existingPlural['=0'] ||
@@ -193,7 +225,7 @@ async function processEntity(entity, output, path, targetLanguage, sourceLanguag
             }
             else {
                 const existingTranslation = existingTranslations[key];
-                const oldStateEntry = oldState.translations[currentPath];
+                const oldStateEntry = oldState.translations ? oldState.translations[currentPath] : undefined;
                 const needsTranslation = !existingTranslation ||
                     !oldStateEntry ||
                     oldStateEntry.schemaHash !== schemaHash;

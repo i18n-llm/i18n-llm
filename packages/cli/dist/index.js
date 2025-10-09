@@ -5,6 +5,7 @@ const commander_1 = require("commander");
 const init_1 = require("./commands/init");
 const generate_1 = require("./commands/generate");
 const review_1 = require("./commands/review");
+const usage_report_1 = require("./commands/usage-report");
 const program = new commander_1.Command();
 program
     .name('i18n-llm')
@@ -13,4 +14,5 @@ program
 program.addCommand(init_1.initCommand);
 program.addCommand(generate_1.generateCommand);
 program.addCommand(review_1.reviewCommand);
+program.addCommand(usage_report_1.usageReportCommand);
 program.parse(process.argv);

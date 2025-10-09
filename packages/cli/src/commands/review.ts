@@ -14,6 +14,22 @@ interface ReviewIssue {
   schemaSuggestion: string;
 }
 
+function loadUsageTotals(): { requests: number; cost: number } {
+  try {
+    const usagePath = path.resolve(process.cwd(), '.i18n-llm-usage.json');
+    if (fs.existsSync(usagePath)) {
+      const usage = JSON.parse(fs.readFileSync(usagePath, 'utf-8'));
+      return {
+        requests: usage.totals?.requests || 0,
+        cost: usage.totals?.estimatedCost || 0,
+      };
+    }
+  } catch (error) {
+    // Ignorar erros
+  }
+  return { requests: 0, cost: 0 };
+}
+
 export const reviewCommand = new Command('review')
   .description('Review generated translations for quality and consistency')
   .option('-l, --language <language>', 'Language code to review (e.g., fr-FR)')
@@ -21,6 +37,9 @@ export const reviewCommand = new Command('review')
   .action(async (options) => {
     try {
       console.log('🔍 Starting translation review...\n');
+
+      // Capturar totais antes da execução
+      const beforeUsage = loadUsageTotals();
 
       // Carregar configuração
       const configPath = path.resolve(process.cwd(), 'i18n-llm.config.js');
@@ -102,8 +121,26 @@ export const reviewCommand = new Command('review')
       console.log(`\n📄 Review report saved to: ${reportPath}`);
       console.log('✨ Review complete!');
 
+      // Mostrar relatório de custo
+      const afterUsage = loadUsageTotals();
+      const requestsThisRun = afterUsage.requests - beforeUsage.requests;
+      const costThisRun = afterUsage.cost - beforeUsage.cost;
+
+      if (requestsThisRun > 0) {
+        console.log('\n📊 Usage Report:');
+        console.log(`   This run: $${costThisRun.toFixed(4)} (${requestsThisRun} requests)`);
+        console.log(`   Total accumulated: $${afterUsage.cost.toFixed(4)} (${afterUsage.requests} requests)`);
+      }
+
     } catch (error) {
       console.error('❌ Review failed:', error);
+      
+      // Mostrar custo mesmo em caso de erro
+      const afterUsage = loadUsageTotals();
+      if (afterUsage.requests > 0) {
+        console.log(`\n💰 Accumulated cost: $${afterUsage.cost.toFixed(4)} (${afterUsage.requests} requests)`);
+      }
+      
       process.exit(1);
     }
   });
@@ -140,6 +177,7 @@ async function reviewObject(
         // Revisar cada forma plural
         for (const pluralKey of ['=0', '=1', '>1']) {
           if (translationValue[pluralKey]) {
+            console.log(`  🔍 Reviewing: ${newPath}.${pluralKey}`);
             const result = await provider.review({
               sourceText,
               translatedText: translationValue[pluralKey],
@@ -159,6 +197,7 @@ async function reviewObject(
       }
       // Se for texto simples
       else if (typeof translationValue === 'string') {
+        console.log(`  🔍 Reviewing: ${newPath}`);
         const result = await provider.review({
           sourceText,
           translatedText: translationValue,

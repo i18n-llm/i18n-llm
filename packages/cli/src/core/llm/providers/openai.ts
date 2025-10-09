@@ -1,5 +1,41 @@
 import { OpenAI } from 'openai';
 import { LLMProvider, PluralizedTranslation, TranslationParams, ReviewParams, ReviewResult } from '../llm-provider';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Preços por 1M tokens (atualizado para gpt-4.1-mini)
+const MODEL_PRICING: { [key: string]: { input: number; output: number } } = {
+  'gpt-4.1-mini': { input: 0.15, output: 0.60 },
+  'gpt-4.1-nano': { input: 0.10, output: 0.40 },
+  'gpt-4o': { input: 2.50, output: 10.00 },
+  'gpt-4o-mini': { input: 0.15, output: 0.60 },
+  'gpt-4-turbo': { input: 10.00, output: 30.00 },
+  'gpt-4': { input: 30.00, output: 60.00 },
+  'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
+};
+
+interface UsageRecord {
+  timestamp: string;
+  operation: 'translate' | 'review';
+  model: string;
+  language?: string;
+  key?: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCost: number;
+}
+
+interface UsageHistory {
+  records: UsageRecord[];
+  totals: {
+    requests: number;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    estimatedCost: number;
+  };
+}
 
 function buildPersonaPrompt(persona: TranslationParams['persona']): string {
   if (!persona) return 'Standard professional and clear.';
@@ -24,10 +60,12 @@ function buildPersonaPrompt(persona: TranslationParams['persona']): string {
 export class OpenAIProvider implements LLMProvider {
   private client: OpenAI;
   private model: string;
+  private usagePath: string;
 
   constructor(apiKey: string, model: string = 'gpt-4.1-mini') {
     this.client = new OpenAI({ apiKey });
     this.model = model;
+    this.usagePath = path.resolve(process.cwd(), '.i18n-llm-usage.json');
   }
 
   private cleanTranslationKeys(obj: any): any {
@@ -41,14 +79,54 @@ export class OpenAIProvider implements LLMProvider {
     
     const cleaned: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      // Remove TODOS os espaços em branco E caracteres de controle Unicode das chaves
-      // Isso corrige "\u000b>1", "\u0003>1", " >1" para ">1"
       let cleanedKey = key.trim();
       cleanedKey = cleanedKey.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
       cleaned[cleanedKey] = this.cleanTranslationKeys(value);
     }
     
     return cleaned;
+  }
+
+  private calculateCost(inputTokens: number, outputTokens: number): number {
+    const pricing = MODEL_PRICING[this.model] || MODEL_PRICING['gpt-4.1-mini'];
+    const inputCost = (inputTokens / 1_000_000) * pricing.input;
+    const outputCost = (outputTokens / 1_000_000) * pricing.output;
+    return inputCost + outputCost;
+  }
+
+  private saveUsage(record: UsageRecord): void {
+    try {
+      let history: UsageHistory = {
+        records: [],
+        totals: {
+          requests: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          estimatedCost: 0,
+        }
+      };
+
+      // Carregar histórico existente
+      if (fs.existsSync(this.usagePath)) {
+        history = JSON.parse(fs.readFileSync(this.usagePath, 'utf-8'));
+      }
+
+      // Adicionar novo registro
+      history.records.push(record);
+
+      // Atualizar totais
+      history.totals.requests++;
+      history.totals.inputTokens += record.inputTokens;
+      history.totals.outputTokens += record.outputTokens;
+      history.totals.totalTokens += record.totalTokens;
+      history.totals.estimatedCost += record.estimatedCost;
+
+      // Salvar
+      fs.writeFileSync(this.usagePath, JSON.stringify(history, null, 2), 'utf-8');
+    } catch (error) {
+      console.warn('⚠️  Could not save usage data:', error);
+    }
   }
 
   async translate(params: TranslationParams): Promise<string | PluralizedTranslation> {
@@ -138,23 +216,35 @@ export class OpenAIProvider implements LLMProvider {
         throw new Error('API returned empty content.');
       }
 
+      // Capturar usage
+      const usage = response.usage;
+      if (usage) {
+        const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
+        const record: UsageRecord = {
+          timestamp: new Date().toISOString(),
+          operation: 'translate',
+          model: this.model,
+          language: targetLanguage,
+          inputTokens: usage.prompt_tokens,
+          outputTokens: usage.completion_tokens,
+          totalTokens: usage.total_tokens,
+          estimatedCost: cost,
+        };
+        this.saveUsage(record);
+        console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
+      }
+
       let jsonResponse = JSON.parse(content);
-      
-      // Aplicar limpeza das chaves para remover caracteres Unicode indesejados
       jsonResponse = this.cleanTranslationKeys(jsonResponse);
 
       if (isPlural) {
-        // Remover a chave 'other' se existir
         if (jsonResponse.other) {
           delete jsonResponse.other;
         }
-
         return jsonResponse as PluralizedTranslation;
-
       } else {
         return jsonResponse.translatedText as string;
       }
-      
     } catch (error) {
       console.error('Error calling OpenAI API:', error);
       throw new Error('Failed to get translation from OpenAI.');
@@ -208,6 +298,24 @@ export class OpenAIProvider implements LLMProvider {
       const content = response.choices[0].message.content;
       if (!content) {
         throw new Error('API returned empty content.');
+      }
+
+      // Capturar usage
+      const usage = response.usage;
+      if (usage) {
+        const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
+        const record: UsageRecord = {
+          timestamp: new Date().toISOString(),
+          operation: 'review',
+          model: this.model,
+          language,
+          inputTokens: usage.prompt_tokens,
+          outputTokens: usage.completion_tokens,
+          totalTokens: usage.total_tokens,
+          estimatedCost: cost,
+        };
+        this.saveUsage(record);
+        console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
       }
 
       return JSON.parse(content) as ReviewResult;
