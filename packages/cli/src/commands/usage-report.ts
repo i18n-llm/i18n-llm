@@ -2,20 +2,20 @@ import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
 
-interface UsageRecord {
-  timestamp: string;
-  operation: 'translate' | 'review';
-  model: string;
-  language?: string;
-  key?: string;
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  estimatedCost: number;
+// Interface compacta (como está salvo no disco)
+interface UsageRecordCompact {
+  ts: string;        // timestamp
+  op: 't' | 'r';    // operation: 't' = translate, 'r' = review
+  m: string;         // model
+  l?: string;        // language
+  it: number;        // inputTokens
+  ot: number;        // outputTokens
+  tt: number;        // totalTokens
+  c: number;         // cost (estimatedCost)
 }
 
 interface UsageHistory {
-  records: UsageRecord[];
+  records: UsageRecordCompact[];
   totals: {
     requests: number;
     inputTokens: number;
@@ -25,14 +25,54 @@ interface UsageHistory {
   };
 }
 
+// Função para expandir operação
+function expandOperation(op: 't' | 'r'): string {
+  return op === 't' ? 'translate' : 'review';
+}
+
 export const usageReportCommand = new Command('usage-report')
   .description('Display usage statistics and cost report')
   .option('-d, --detailed', 'Show detailed breakdown by language and operation')
   .option('--json', 'Output in JSON format')
+  .option('--reset', 'Reset usage statistics (creates backup first)')
+  .option('--no-backup', 'Skip creating backup when resetting')
   .action((options) => {
     try {
       const usagePath = path.resolve(process.cwd(), '.i18n-llm-usage.json');
       
+      // Se for reset
+      if (options.reset) {
+        if (!fs.existsSync(usagePath)) {
+          console.log('📊 No usage data to reset.\n');
+          return;
+        }
+
+        // Criar backup se solicitado
+        if (options.backup !== false) {
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const backupPath = path.resolve(process.cwd(), `.i18n-llm-usage.backup-${timestamp}.json`);
+          fs.copyFileSync(usagePath, backupPath);
+          console.log(`💾 Backup created: ${backupPath}`);
+        }
+
+        // Resetar
+        const emptyUsage: UsageHistory = {
+          records: [],
+          totals: {
+            requests: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            totalTokens: 0,
+            estimatedCost: 0,
+          }
+        };
+
+        fs.writeFileSync(usagePath, JSON.stringify(emptyUsage), 'utf-8');
+        console.log('✨ Usage statistics reset successfully!\n');
+        return;
+      }
+
+      // Relatório normal
       if (!fs.existsSync(usagePath)) {
         console.log('📊 No usage data found yet.');
         console.log('Run `i18n-llm generate` or `i18n-llm review` to start tracking usage.\n');
@@ -42,7 +82,21 @@ export const usageReportCommand = new Command('usage-report')
       const usage: UsageHistory = JSON.parse(fs.readFileSync(usagePath, 'utf-8'));
 
       if (options.json) {
-        console.log(JSON.stringify(usage, null, 2));
+        // Expandir abreviações para JSON output
+        const expanded = {
+          records: usage.records.map(r => ({
+            timestamp: r.ts,
+            operation: expandOperation(r.op),
+            model: r.m,
+            language: r.l,
+            inputTokens: r.it,
+            outputTokens: r.ot,
+            totalTokens: r.tt,
+            estimatedCost: r.c,
+          })),
+          totals: usage.totals
+        };
+        console.log(JSON.stringify(expanded, null, 2));
         return;
       }
 
@@ -60,11 +114,12 @@ export const usageReportCommand = new Command('usage-report')
         // Agrupar por operação
         const byOperation: { [key: string]: { requests: number; cost: number } } = {};
         usage.records.forEach(record => {
-          if (!byOperation[record.operation]) {
-            byOperation[record.operation] = { requests: 0, cost: 0 };
+          const op = expandOperation(record.op);
+          if (!byOperation[op]) {
+            byOperation[op] = { requests: 0, cost: 0 };
           }
-          byOperation[record.operation].requests++;
-          byOperation[record.operation].cost += record.estimatedCost;
+          byOperation[op].requests++;
+          byOperation[op].cost += record.c;
         });
 
         console.log('\n\n📊 By Operation\n');
@@ -78,12 +133,12 @@ export const usageReportCommand = new Command('usage-report')
         // Agrupar por idioma
         const byLanguage: { [key: string]: { requests: number; cost: number } } = {};
         usage.records.forEach(record => {
-          if (record.language) {
-            if (!byLanguage[record.language]) {
-              byLanguage[record.language] = { requests: 0, cost: 0 };
+          if (record.l) {
+            if (!byLanguage[record.l]) {
+              byLanguage[record.l] = { requests: 0, cost: 0 };
             }
-            byLanguage[record.language].requests++;
-            byLanguage[record.language].cost += record.estimatedCost;
+            byLanguage[record.l].requests++;
+            byLanguage[record.l].cost += record.c;
           }
         });
 
@@ -105,11 +160,11 @@ export const usageReportCommand = new Command('usage-report')
         // Agrupar por modelo
         const byModel: { [key: string]: { requests: number; cost: number } } = {};
         usage.records.forEach(record => {
-          if (!byModel[record.model]) {
-            byModel[record.model] = { requests: 0, cost: 0 };
+          if (!byModel[record.m]) {
+            byModel[record.m] = { requests: 0, cost: 0 };
           }
-          byModel[record.model].requests++;
-          byModel[record.model].cost += record.estimatedCost;
+          byModel[record.m].requests++;
+          byModel[record.m].cost += record.c;
         });
 
         console.log('\n\n🤖 By Model\n');
@@ -125,12 +180,12 @@ export const usageReportCommand = new Command('usage-report')
         console.log('─'.repeat(50));
         const recentRecords = usage.records.slice(-5).reverse();
         recentRecords.forEach(record => {
-          const date = new Date(record.timestamp);
+          const date = new Date(record.ts);
           console.log(`\n${date.toLocaleString()}`);
-          console.log(`  Operation: ${record.operation}`);
-          console.log(`  Language:  ${record.language || 'N/A'}`);
-          console.log(`  Tokens:    ${record.totalTokens.toLocaleString()}`);
-          console.log(`  Cost:      $${record.estimatedCost.toFixed(4)}`);
+          console.log(`  Operation: ${expandOperation(record.op)}`);
+          console.log(`  Language:  ${record.l || 'N/A'}`);
+          console.log(`  Tokens:    ${record.tt.toLocaleString()}`);
+          console.log(`  Cost:      $${record.c.toFixed(4)}`);
         });
       }
 

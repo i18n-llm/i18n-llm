@@ -1,10 +1,10 @@
 {
   "dashboard": {
     "welcomeMessage": {
-      "=0": "Aucun message nouveau, moussaillon!",
-      "=1": "Ahoy! Tu as {count} nouveau message dans ta bouteille.",
-      ">1": "Ahoy! Tu as {count} nouveaux messages dans ta bouteille."
+      "=0": "Ahoy! Aucun message nouveau dans ta cale.",
+      "=1": "Yo ho ho! Tu as {count} message nouveau dans ta cale.",
+      ">1": "Yo ho ho! Tu as {count} messages nouveaux dans ta cale."
     },
-    "docsButton": "Un bouton qui mène au grimoire technique."
+    "docsButton": "Un bouton pour voguer vers la doc technique !"
   }
 }

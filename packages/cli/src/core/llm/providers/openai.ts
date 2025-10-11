@@ -14,20 +14,20 @@ const MODEL_PRICING: { [key: string]: { input: number; output: number } } = {
   'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
 };
 
-interface UsageRecord {
-  timestamp: string;
-  operation: 'translate' | 'review';
-  model: string;
-  language?: string;
-  key?: string;
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-  estimatedCost: number;
+// Interface compacta para salvar em disco
+interface UsageRecordCompact {
+  ts: string;        // timestamp
+  op: 't' | 'r';    // operation: 't' = translate, 'r' = review
+  m: string;         // model
+  l?: string;        // language
+  it: number;        // inputTokens
+  ot: number;        // outputTokens
+  tt: number;        // totalTokens
+  c: number;         // cost (estimatedCost)
 }
 
 interface UsageHistory {
-  records: UsageRecord[];
+  records: UsageRecordCompact[];
   totals: {
     requests: number;
     inputTokens: number;
@@ -57,13 +57,24 @@ function buildPersonaPrompt(persona: TranslationParams['persona']): string {
   return prompt;
 }
 
+// Função para esperar (sleep)
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export class OpenAIProvider implements LLMProvider {
   private client: OpenAI;
   private model: string;
   private usagePath: string;
+  private maxRetries: number = 3;
+  private timeoutMs: number = 60000; // 60 segundos
 
   constructor(apiKey: string, model: string = 'gpt-4.1-mini') {
-    this.client = new OpenAI({ apiKey });
+    this.client = new OpenAI({ 
+      apiKey,
+      timeout: this.timeoutMs,
+      maxRetries: 0, // Vamos fazer retry manual
+    });
     this.model = model;
     this.usagePath = path.resolve(process.cwd(), '.i18n-llm-usage.json');
   }
@@ -94,7 +105,7 @@ export class OpenAIProvider implements LLMProvider {
     return inputCost + outputCost;
   }
 
-  private saveUsage(record: UsageRecord): void {
+  private saveUsage(record: UsageRecordCompact): void {
     try {
       let history: UsageHistory = {
         records: [],
@@ -117,16 +128,43 @@ export class OpenAIProvider implements LLMProvider {
 
       // Atualizar totais
       history.totals.requests++;
-      history.totals.inputTokens += record.inputTokens;
-      history.totals.outputTokens += record.outputTokens;
-      history.totals.totalTokens += record.totalTokens;
-      history.totals.estimatedCost += record.estimatedCost;
+      history.totals.inputTokens += record.it;
+      history.totals.outputTokens += record.ot;
+      history.totals.totalTokens += record.tt;
+      history.totals.estimatedCost += record.c;
 
-      // Salvar
-      fs.writeFileSync(this.usagePath, JSON.stringify(history, null, 2), 'utf-8');
+      // Salvar compactado (sem formatação)
+      fs.writeFileSync(this.usagePath, JSON.stringify(history), 'utf-8');
     } catch (error) {
       console.warn('⚠️  Could not save usage data:', error);
     }
+  }
+
+  private async retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    context: string
+  ): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error: any) {
+        lastError = error;
+        
+        // Se for erro de rate limit, espera mais tempo
+        const isRateLimit = error?.status === 429 || error?.code === 'rate_limit_exceeded';
+        
+        if (attempt < this.maxRetries) {
+          const baseDelay = isRateLimit ? 5000 : 2000;
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          console.log(`     ⚠️  Retry ${attempt}/${this.maxRetries} after ${delay}ms (${error?.message || 'unknown error'})`);
+          await sleep(delay);
+        }
+      }
+    }
+    
+    throw new Error(`${context} failed after ${this.maxRetries} attempts: ${lastError?.message || 'unknown error'}`);
   }
 
   async translate(params: TranslationParams): Promise<string | PluralizedTranslation> {
@@ -200,8 +238,8 @@ export class OpenAIProvider implements LLMProvider {
       });
     }
 
-    try {
-      const response = await this.client.chat.completions.create({
+    const response = await this.retryWithBackoff(
+      () => this.client.chat.completions.create({
         model: this.model,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -209,45 +247,43 @@ export class OpenAIProvider implements LLMProvider {
         ],
         temperature: 0.7,
         response_format: { type: 'json_object' },
-      });
+      }),
+      'Translation'
+    );
 
-      const content = response.choices[0].message.content;
-      if (!content) {
-        throw new Error('API returned empty content.');
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error('API returned empty content.');
+    }
+
+    // Capturar usage
+    const usage = response.usage;
+    if (usage) {
+      const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
+      const record: UsageRecordCompact = {
+        ts: new Date().toISOString(),
+        op: 't',
+        m: this.model,
+        l: targetLanguage,
+        it: usage.prompt_tokens,
+        ot: usage.completion_tokens,
+        tt: usage.total_tokens,
+        c: cost,
+      };
+      this.saveUsage(record);
+      console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
+    }
+
+    let jsonResponse = JSON.parse(content);
+    jsonResponse = this.cleanTranslationKeys(jsonResponse);
+
+    if (isPlural) {
+      if (jsonResponse.other) {
+        delete jsonResponse.other;
       }
-
-      // Capturar usage
-      const usage = response.usage;
-      if (usage) {
-        const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
-        const record: UsageRecord = {
-          timestamp: new Date().toISOString(),
-          operation: 'translate',
-          model: this.model,
-          language: targetLanguage,
-          inputTokens: usage.prompt_tokens,
-          outputTokens: usage.completion_tokens,
-          totalTokens: usage.total_tokens,
-          estimatedCost: cost,
-        };
-        this.saveUsage(record);
-        console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
-      }
-
-      let jsonResponse = JSON.parse(content);
-      jsonResponse = this.cleanTranslationKeys(jsonResponse);
-
-      if (isPlural) {
-        if (jsonResponse.other) {
-          delete jsonResponse.other;
-        }
-        return jsonResponse as PluralizedTranslation;
-      } else {
-        return jsonResponse.translatedText as string;
-      }
-    } catch (error) {
-      console.error('Error calling OpenAI API:', error);
-      throw new Error('Failed to get translation from OpenAI.');
+      return jsonResponse as PluralizedTranslation;
+    } else {
+      return jsonResponse.translatedText as string;
     }
   }
 
@@ -284,8 +320,8 @@ export class OpenAIProvider implements LLMProvider {
       constraints,
     });
 
-    try {
-      const response = await this.client.chat.completions.create({
+    const response = await this.retryWithBackoff(
+      () => this.client.chat.completions.create({
         model: this.model,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -293,35 +329,33 @@ export class OpenAIProvider implements LLMProvider {
         ],
         temperature: 0.2,
         response_format: { type: 'json_object' },
-      });
+      }),
+      'Review'
+    );
 
-      const content = response.choices[0].message.content;
-      if (!content) {
-        throw new Error('API returned empty content.');
-      }
-
-      // Capturar usage
-      const usage = response.usage;
-      if (usage) {
-        const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
-        const record: UsageRecord = {
-          timestamp: new Date().toISOString(),
-          operation: 'review',
-          model: this.model,
-          language,
-          inputTokens: usage.prompt_tokens,
-          outputTokens: usage.completion_tokens,
-          totalTokens: usage.total_tokens,
-          estimatedCost: cost,
-        };
-        this.saveUsage(record);
-        console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
-      }
-
-      return JSON.parse(content) as ReviewResult;
-    } catch (error) {
-      console.error('Error calling OpenAI API for review:', error);
-      throw new Error('Failed to get review from OpenAI.');
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error('API returned empty content.');
     }
+
+    // Capturar usage
+    const usage = response.usage;
+    if (usage) {
+      const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
+      const record: UsageRecordCompact = {
+        ts: new Date().toISOString(),
+        op: 'r',
+        m: this.model,
+        l: language,
+        it: usage.prompt_tokens,
+        ot: usage.completion_tokens,
+        tt: usage.total_tokens,
+        c: cost,
+      };
+      this.saveUsage(record);
+      console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
+    }
+
+    return JSON.parse(content) as ReviewResult;
   }
 }

@@ -1,10 +1,10 @@
 {
   "dashboard": {
     "welcomeMessage": {
-      "=0": "Ahoy! No new messages in yer inbox, matey.",
-      "=1": "Avast! Ye've got 1 new message in yer hold.",
-      ">1": "Avast! Ye've got {count} new messages in yer hold, ready to be plundered!"
+      "3": "Yo ho ho! Ye've got {count} shiny new messages awaitin' in yer hold.",
+      "=0": "Ahoy! Yer inbox be as empty as a ghost ship.",
+      "=1": "Avast! Ye have 1 new message in yer treasure chest."
     },
-    "docsButton": "Hoist the Docs!"
+    "docsButton": "Plot a course to the tech scrolls!"
   }
 }

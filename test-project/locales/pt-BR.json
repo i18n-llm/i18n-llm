@@ -1,10 +1,10 @@
 {
   "dashboard": {
     "welcomeMessage": {
-      "=0": "Nenhuma mensagem nova, marujo!",
-      "=1": "Ahoy! Você tem 1 mensagem nova no convés.",
-      ">1": "Ahoy! Você tem {count} mensagens novas no convés."
+      "=0": "Ahoy! Nenhuma mensagem nova no baú, por enquanto.",
+      "=1": "Arrr, tens 1 mensagem nova a bordo!",
+      ">1": "Arrr, tens {count} mensagens novas a bordo!"
     },
-    "docsButton": "Um botão que leva ao mapa do tesouro técnico."
+    "docsButton": "Um botão que te leva ao mapa do tesouro técnico."
   }
 }

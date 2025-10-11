@@ -1,21 +1,21 @@
 {
   "version": "2.1",
-  "lastGenerated": "2025-10-09T23:26:34.615Z",
+  "lastGenerated": "2025-10-11T23:07:11.338Z",
   "translations": {
     "dashboard.welcomeMessage.=0": {
-      "hash": "c7198e4b",
+      "hash": "7f76b315",
       "schemaHash": "0bebd078"
     },
     "dashboard.welcomeMessage.=1": {
-      "hash": "f64af5a8",
+      "hash": "9614ce2d",
       "schemaHash": "0bebd078"
     },
     "dashboard.welcomeMessage.>1": {
-      "hash": "73452d2f",
+      "hash": "4e35394b",
       "schemaHash": "0bebd078"
     },
     "dashboard.docsButton": {
-      "hash": "9a457074",
+      "hash": "8691da6d",
       "schemaHash": "b902467f"
     }
   }

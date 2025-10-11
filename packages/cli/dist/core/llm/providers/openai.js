@@ -66,9 +66,19 @@ function buildPersonaPrompt(persona) {
     }
     return prompt;
 }
+// Função para esperar (sleep)
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 class OpenAIProvider {
     constructor(apiKey, model = 'gpt-4.1-mini') {
-        this.client = new openai_1.OpenAI({ apiKey });
+        this.maxRetries = 3;
+        this.timeoutMs = 60000; // 60 segundos
+        this.client = new openai_1.OpenAI({
+            apiKey,
+            timeout: this.timeoutMs,
+            maxRetries: 0, // Vamos fazer retry manual
+        });
         this.model = model;
         this.usagePath = path.resolve(process.cwd(), '.i18n-llm-usage.json');
     }
@@ -113,16 +123,36 @@ class OpenAIProvider {
             history.records.push(record);
             // Atualizar totais
             history.totals.requests++;
-            history.totals.inputTokens += record.inputTokens;
-            history.totals.outputTokens += record.outputTokens;
-            history.totals.totalTokens += record.totalTokens;
-            history.totals.estimatedCost += record.estimatedCost;
-            // Salvar
-            fs.writeFileSync(this.usagePath, JSON.stringify(history, null, 2), 'utf-8');
+            history.totals.inputTokens += record.it;
+            history.totals.outputTokens += record.ot;
+            history.totals.totalTokens += record.tt;
+            history.totals.estimatedCost += record.c;
+            // Salvar compactado (sem formatação)
+            fs.writeFileSync(this.usagePath, JSON.stringify(history), 'utf-8');
         }
         catch (error) {
             console.warn('⚠️  Could not save usage data:', error);
         }
+    }
+    async retryWithBackoff(fn, context) {
+        let lastError;
+        for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+            try {
+                return await fn();
+            }
+            catch (error) {
+                lastError = error;
+                // Se for erro de rate limit, espera mais tempo
+                const isRateLimit = error?.status === 429 || error?.code === 'rate_limit_exceeded';
+                if (attempt < this.maxRetries) {
+                    const baseDelay = isRateLimit ? 5000 : 2000;
+                    const delay = baseDelay * Math.pow(2, attempt - 1);
+                    console.log(`     ⚠️  Retry ${attempt}/${this.maxRetries} after ${delay}ms (${error?.message || 'unknown error'})`);
+                    await sleep(delay);
+                }
+            }
+        }
+        throw new Error(`${context} failed after ${this.maxRetries} attempts: ${lastError?.message || 'unknown error'}`);
     }
     async translate(params) {
         const { sourceText, sourceLanguage, targetLanguage, persona, glossary, context, category, isPlural, params: textParams, constraints, } = params;
@@ -180,52 +210,46 @@ class OpenAIProvider {
                 constraints,
             });
         }
-        try {
-            const response = await this.client.chat.completions.create({
-                model: this.model,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userMessage },
-                ],
-                temperature: 0.7,
-                response_format: { type: 'json_object' },
-            });
-            const content = response.choices[0].message.content;
-            if (!content) {
-                throw new Error('API returned empty content.');
-            }
-            // Capturar usage
-            const usage = response.usage;
-            if (usage) {
-                const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
-                const record = {
-                    timestamp: new Date().toISOString(),
-                    operation: 'translate',
-                    model: this.model,
-                    language: targetLanguage,
-                    inputTokens: usage.prompt_tokens,
-                    outputTokens: usage.completion_tokens,
-                    totalTokens: usage.total_tokens,
-                    estimatedCost: cost,
-                };
-                this.saveUsage(record);
-                console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
-            }
-            let jsonResponse = JSON.parse(content);
-            jsonResponse = this.cleanTranslationKeys(jsonResponse);
-            if (isPlural) {
-                if (jsonResponse.other) {
-                    delete jsonResponse.other;
-                }
-                return jsonResponse;
-            }
-            else {
-                return jsonResponse.translatedText;
-            }
+        const response = await this.retryWithBackoff(() => this.client.chat.completions.create({
+            model: this.model,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage },
+            ],
+            temperature: 0.7,
+            response_format: { type: 'json_object' },
+        }), 'Translation');
+        const content = response.choices[0].message.content;
+        if (!content) {
+            throw new Error('API returned empty content.');
         }
-        catch (error) {
-            console.error('Error calling OpenAI API:', error);
-            throw new Error('Failed to get translation from OpenAI.');
+        // Capturar usage
+        const usage = response.usage;
+        if (usage) {
+            const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
+            const record = {
+                ts: new Date().toISOString(),
+                op: 't',
+                m: this.model,
+                l: targetLanguage,
+                it: usage.prompt_tokens,
+                ot: usage.completion_tokens,
+                tt: usage.total_tokens,
+                c: cost,
+            };
+            this.saveUsage(record);
+            console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
+        }
+        let jsonResponse = JSON.parse(content);
+        jsonResponse = this.cleanTranslationKeys(jsonResponse);
+        if (isPlural) {
+            if (jsonResponse.other) {
+                delete jsonResponse.other;
+            }
+            return jsonResponse;
+        }
+        else {
+            return jsonResponse.translatedText;
         }
     }
     async review(params) {
@@ -257,43 +281,37 @@ class OpenAIProvider {
             language,
             constraints,
         });
-        try {
-            const response = await this.client.chat.completions.create({
-                model: this.model,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userMessage },
-                ],
-                temperature: 0.2,
-                response_format: { type: 'json_object' },
-            });
-            const content = response.choices[0].message.content;
-            if (!content) {
-                throw new Error('API returned empty content.');
-            }
-            // Capturar usage
-            const usage = response.usage;
-            if (usage) {
-                const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
-                const record = {
-                    timestamp: new Date().toISOString(),
-                    operation: 'review',
-                    model: this.model,
-                    language,
-                    inputTokens: usage.prompt_tokens,
-                    outputTokens: usage.completion_tokens,
-                    totalTokens: usage.total_tokens,
-                    estimatedCost: cost,
-                };
-                this.saveUsage(record);
-                console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
-            }
-            return JSON.parse(content);
+        const response = await this.retryWithBackoff(() => this.client.chat.completions.create({
+            model: this.model,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage },
+            ],
+            temperature: 0.2,
+            response_format: { type: 'json_object' },
+        }), 'Review');
+        const content = response.choices[0].message.content;
+        if (!content) {
+            throw new Error('API returned empty content.');
         }
-        catch (error) {
-            console.error('Error calling OpenAI API for review:', error);
-            throw new Error('Failed to get review from OpenAI.');
+        // Capturar usage
+        const usage = response.usage;
+        if (usage) {
+            const cost = this.calculateCost(usage.prompt_tokens, usage.completion_tokens);
+            const record = {
+                ts: new Date().toISOString(),
+                op: 'r',
+                m: this.model,
+                l: language,
+                it: usage.prompt_tokens,
+                ot: usage.completion_tokens,
+                tt: usage.total_tokens,
+                c: cost,
+            };
+            this.saveUsage(record);
+            console.log(`     💰 Cost: $${cost.toFixed(4)} (${usage.total_tokens} tokens)`);
         }
+        return JSON.parse(content);
     }
 }
 exports.OpenAIProvider = OpenAIProvider;
