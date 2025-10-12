@@ -1,10 +1,20 @@
 {
+  "user_info": {
+    "name": "Déclare ton nom complet, guerrier. Que chaque lettre crie ta fierté.",
+    "email": "Inscris ton adresse email—ne compte pas sur moi pour porter tes messages.",
+    "socialnetwork": "Donne ton pseudo sur le réseau social. Même les Saiyans doivent se connecter.",
+    "address": "Où résides-tu ? Donne ton adresse complète, mais fais vite.",
+    "password": "Forge un mot de passe assez puissant pour protéger tes secrets.",
+    "confirmPassword": "Confirme le mot de passe. Pas de maillons faibles ici.",
+    "cancelButton": "Repli",
+    "submitButton": "Déchaîne"
+  },
   "dashboard": {
     "welcomeMessage": {
-      "=0": "Ahoy! Aucun message nouveau dans ta cale.",
-      "=1": "Yo ho ho! Tu as {count} message nouveau dans ta cale.",
-      ">1": "Yo ho ho! Tu as {count} messages nouveaux dans ta cale."
+      "=0": "Aucun message. C’est tout ce que tu as ?",
+      "=1": "Un message pour toi. Ne me fais pas perdre mon temps.",
+      ">1": "Tu as {count} messages. Traite-les vite."
     },
-    "docsButton": "Un bouton pour voguer vers la doc technique !"
+    "docsButton": "Accéder aux Docs"
   }
 }

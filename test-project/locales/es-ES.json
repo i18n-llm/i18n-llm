@@ -1,10 +1,20 @@
 {
+  "user_info": {
+    "name": "Declara tu nombre completo, guerrero. Que el orgullo se note en cada letra.",
+    "email": "Introduce tu correo electrónico—no esperes que yo cargue con tus mensajes.",
+    "socialnetwork": "Proporciona tu cuenta en redes sociales. Hasta los Saiyajin deben conectarse.",
+    "address": "¿Dónde resides? Da tu dirección completa, pero sin perder tiempo.",
+    "password": "Forja una contraseña lo suficientemente fuerte para proteger tus secretos.",
+    "confirmPassword": "Confirma la contraseña. No permito debilidades.",
+    "cancelButton": "Retirada",
+    "submitButton": "Desata"
+  },
   "dashboard": {
     "welcomeMessage": {
-      "=0": "¡Arr! No hay mensajes nuevos en el cuaderno de bitácora.",
-      "=1": "¡Ahoy! Tienes 1 mensaje nuevo en el cuaderno de bitácora.",
-      ">1": "¡Ahoy! Tienes {count} mensajes nuevos en el cuaderno de bitácora."
+      "=0": "Sin mensajes nuevos. ¿Eso es todo?",
+      "=1": "Un mensaje para ti. No pierdas mi tiempo.",
+      ">1": "Tienes {count} mensajes. Ocúpate rápido."
     },
-    "docsButton": "Un botón que abre el mapa del tesoro técnico."
+    "docsButton": "Accede a los Docs"
   }
 }

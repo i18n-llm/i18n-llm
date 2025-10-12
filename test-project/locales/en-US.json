@@ -1,10 +1,20 @@
 {
+  "user_info": {
+    "name": "State your full name, warrior. Show your pride in every letter.",
+    "email": "Enter your email address—don't expect me to carry your messages.",
+    "socialnetwork": "Provide your social network handle. Even Saiyans need to connect.",
+    "address": "Where do you dwell? Give your full address, but make it quick.",
+    "password": "Forge a password strong enough to protect your secrets.",
+    "confirmPassword": "Confirm the password. No weak links allowed.",
+    "cancelButton": "Retreat",
+    "submitButton": "Unleash"
+  },
   "dashboard": {
     "welcomeMessage": {
-      "3": "Yo ho ho! Ye've got {count} shiny new messages awaitin' in yer hold.",
-      "=0": "Ahoy! Yer inbox be as empty as a ghost ship.",
-      "=1": "Avast! Ye have 1 new message in yer treasure chest."
+      "=0": "No new messages. Is that all you've got?",
+      "=1": "One message for you. Don't waste my time.",
+      ">1": "You have {count} messages. Handle them swiftly."
     },
-    "docsButton": "Plot a course to the tech scrolls!"
+    "docsButton": "Access the Docs"
   }
 }

@@ -1,22 +1,250 @@
 {
   "version": "2.1",
-  "lastGenerated": "2025-10-11T23:07:11.338Z",
+  "lastGenerated": "2025-10-12T00:59:27.385Z",
   "translations": {
+    "user_info.name": {
+      "hash": "533f3f17",
+      "schemaHash": "dfbeb38e"
+    },
+    "user_info.email": {
+      "hash": "026c71ee",
+      "schemaHash": "8189d8d1"
+    },
+    "user_info.socialnetwork": {
+      "hash": "8ca26c33",
+      "schemaHash": "d115e7b0"
+    },
+    "user_info.address": {
+      "hash": "137a6b7c",
+      "schemaHash": "be537370"
+    },
+    "user_info.password": {
+      "hash": "8e69d143",
+      "schemaHash": "d39254d6"
+    },
+    "user_info.confirmPassword": {
+      "hash": "c04c94e1",
+      "schemaHash": "3142e36e"
+    },
+    "user_info.cancelButton": {
+      "hash": "38e9c052",
+      "schemaHash": "8cf238c5"
+    },
+    "user_info.submitButton": {
+      "hash": "78e809c6",
+      "schemaHash": "8b0a68e8"
+    },
     "dashboard.welcomeMessage.=0": {
-      "hash": "7f76b315",
+      "hash": "6881677a",
       "schemaHash": "0bebd078"
     },
     "dashboard.welcomeMessage.=1": {
-      "hash": "9614ce2d",
+      "hash": "06f301bf",
       "schemaHash": "0bebd078"
     },
     "dashboard.welcomeMessage.>1": {
-      "hash": "4e35394b",
+      "hash": "2310766a",
       "schemaHash": "0bebd078"
     },
     "dashboard.docsButton": {
-      "hash": "8691da6d",
-      "schemaHash": "b902467f"
+      "hash": "3e309a87",
+      "schemaHash": "11e99c77"
+    }
+  },
+  "user_info.name": {
+    "hash": "a27bb7c74e98365fba6f6aae8667bea6",
+    "sourceText": "State your full name, warrior. Show your pride in every letter.",
+    "translations": {
+      "pt-BR": {
+        "hash": "a27bb7c74e98365fba6f6aae8667bea6",
+        "text": "Declare seu nome completo, guerreiro. Mostre orgulho em cada letra."
+      },
+      "es-ES": {
+        "hash": "a27bb7c74e98365fba6f6aae8667bea6",
+        "text": "Declara tu nombre completo, guerrero. Que el orgullo se note en cada letra."
+      },
+      "fr-FR": {
+        "hash": "a27bb7c74e98365fba6f6aae8667bea6",
+        "text": "Déclare ton nom complet, guerrier. Que chaque lettre crie ta fierté."
+      }
+    }
+  },
+  "user_info.email": {
+    "hash": "c445905520e3784b382669dfa5f01491",
+    "sourceText": "Enter your email address—don't expect me to carry your messages.",
+    "translations": {
+      "pt-BR": {
+        "hash": "c445905520e3784b382669dfa5f01491",
+        "text": "Informe seu e-mail — não espere que eu carregue suas mensagens."
+      },
+      "es-ES": {
+        "hash": "c445905520e3784b382669dfa5f01491",
+        "text": "Introduce tu correo electrónico—no esperes que yo cargue con tus mensajes."
+      },
+      "fr-FR": {
+        "hash": "c445905520e3784b382669dfa5f01491",
+        "text": "Inscris ton adresse email—ne compte pas sur moi pour porter tes messages."
+      }
+    }
+  },
+  "user_info.socialnetwork": {
+    "hash": "24a5810dd27c2af1490e2baf4c0deca9",
+    "sourceText": "Provide your social network handle. Even Saiyans need to connect.",
+    "translations": {
+      "pt-BR": {
+        "hash": "24a5810dd27c2af1490e2baf4c0deca9",
+        "text": "Dê seu nome nas redes sociais. Até Saiyajins precisam se conectar."
+      },
+      "es-ES": {
+        "hash": "24a5810dd27c2af1490e2baf4c0deca9",
+        "text": "Proporciona tu cuenta en redes sociales. Hasta los Saiyajin deben conectarse."
+      },
+      "fr-FR": {
+        "hash": "24a5810dd27c2af1490e2baf4c0deca9",
+        "text": "Donne ton pseudo sur le réseau social. Même les Saiyans doivent se connecter."
+      }
+    }
+  },
+  "user_info.address": {
+    "hash": "1f3748c19181c7b6875c4e9856b18377",
+    "sourceText": "Where do you dwell? Give your full address, but make it quick.",
+    "translations": {
+      "pt-BR": {
+        "hash": "1f3748c19181c7b6875c4e9856b18377",
+        "text": "Onde você habita? Dê seu endereço completo, mas seja rápido."
+      },
+      "es-ES": {
+        "hash": "1f3748c19181c7b6875c4e9856b18377",
+        "text": "¿Dónde resides? Da tu dirección completa, pero sin perder tiempo."
+      },
+      "fr-FR": {
+        "hash": "1f3748c19181c7b6875c4e9856b18377",
+        "text": "Où résides-tu ? Donne ton adresse complète, mais fais vite."
+      }
+    }
+  },
+  "user_info.password": {
+    "hash": "4729fcca7a54a4ba4243f8bfd595a5eb",
+    "sourceText": "Forge a password strong enough to protect your secrets.",
+    "translations": {
+      "pt-BR": {
+        "hash": "4729fcca7a54a4ba4243f8bfd595a5eb",
+        "text": "Forje uma senha forte o bastante para proteger seus segredos."
+      },
+      "es-ES": {
+        "hash": "4729fcca7a54a4ba4243f8bfd595a5eb",
+        "text": "Forja una contraseña lo suficientemente fuerte para proteger tus secretos."
+      },
+      "fr-FR": {
+        "hash": "4729fcca7a54a4ba4243f8bfd595a5eb",
+        "text": "Forge un mot de passe assez puissant pour protéger tes secrets."
+      }
+    }
+  },
+  "user_info.confirmPassword": {
+    "hash": "af7d34bbf88a57853150806f8a4f11da",
+    "sourceText": "Confirm the password. No weak links allowed.",
+    "translations": {
+      "pt-BR": {
+        "hash": "af7d34bbf88a57853150806f8a4f11da",
+        "text": "Confirme a senha. Não aceito fraquezas."
+      },
+      "es-ES": {
+        "hash": "af7d34bbf88a57853150806f8a4f11da",
+        "text": "Confirma la contraseña. No permito debilidades."
+      },
+      "fr-FR": {
+        "hash": "af7d34bbf88a57853150806f8a4f11da",
+        "text": "Confirme le mot de passe. Pas de maillons faibles ici."
+      }
+    }
+  },
+  "user_info.cancelButton": {
+    "hash": "84778024b53536a553d446dcfdeb2900",
+    "sourceText": "Retreat",
+    "translations": {
+      "pt-BR": {
+        "hash": "84778024b53536a553d446dcfdeb2900",
+        "text": "Retirada"
+      },
+      "es-ES": {
+        "hash": "84778024b53536a553d446dcfdeb2900",
+        "text": "Retirada"
+      },
+      "fr-FR": {
+        "hash": "84778024b53536a553d446dcfdeb2900",
+        "text": "Repli"
+      }
+    }
+  },
+  "user_info.submitButton": {
+    "hash": "44a6e2b2302d4bb2170033cdd539e2f5",
+    "sourceText": "Unleash",
+    "translations": {
+      "pt-BR": {
+        "hash": "44a6e2b2302d4bb2170033cdd539e2f5",
+        "text": "Liberar"
+      },
+      "es-ES": {
+        "hash": "44a6e2b2302d4bb2170033cdd539e2f5",
+        "text": "Desata"
+      },
+      "fr-FR": {
+        "hash": "44a6e2b2302d4bb2170033cdd539e2f5",
+        "text": "Déchaîne"
+      }
+    }
+  },
+  "dashboard.welcomeMessage": {
+    "hash": "46533539924d7b2eb7606b33c929261d",
+    "sourceText": {
+      "=0": "No new messages. Is that all you've got?",
+      "=1": "One message for you. Don't waste my time.",
+      ">1": "You have {count} messages. Handle them swiftly."
+    },
+    "translations": {
+      "pt-BR": {
+        "hash": "46533539924d7b2eb7606b33c929261d",
+        "text": {
+          "=0": "Sem novas mensagens. Isso é tudo?",
+          "=1": "Uma mensagem para você. Não me faça perder tempo.",
+          ">1": "Você tem {count} mensagens. Resolva rápido."
+        }
+      },
+      "es-ES": {
+        "hash": "46533539924d7b2eb7606b33c929261d",
+        "text": {
+          "=0": "Sin mensajes nuevos. ¿Eso es todo?",
+          "=1": "Un mensaje para ti. No pierdas mi tiempo.",
+          ">1": "Tienes {count} mensajes. Ocúpate rápido."
+        }
+      },
+      "fr-FR": {
+        "hash": "46533539924d7b2eb7606b33c929261d",
+        "text": {
+          "=0": "Aucun message. C’est tout ce que tu as ?",
+          "=1": "Un message pour toi. Ne me fais pas perdre mon temps.",
+          ">1": "Tu as {count} messages. Traite-les vite."
+        }
+      }
+    }
+  },
+  "dashboard.docsButton": {
+    "hash": "b04277ee8a170089030cb35d5d272bff",
+    "sourceText": "Access the Docs",
+    "translations": {
+      "pt-BR": {
+        "hash": "b04277ee8a170089030cb35d5d272bff",
+        "text": "Abrir Documentos"
+      },
+      "es-ES": {
+        "hash": "b04277ee8a170089030cb35d5d272bff",
+        "text": "Accede a los Docs"
+      },
+      "fr-FR": {
+        "hash": "b04277ee8a170089030cb35d5d272bff",
+        "text": "Accéder aux Docs"
+      }
     }
   }
 }
