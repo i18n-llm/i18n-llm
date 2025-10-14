@@ -1,0 +1,20 @@
+{
+  "user_info": {
+    "name": "¿Cuál es tu nombre completo, para dejar claro quién domina aquí?",
+    "email": "Introduce tu dirección de correo electrónico, no me hagas repetirlo.",
+    "socialnetwork": "¿Cuál es tu identificador en redes sociales? Que se note tu presencia.",
+    "address": "Dime tu dirección física, que necesito saber dónde enviarte la derrota si fallas.",
+    "password": "Establece una contraseña fuerte, como un ataque Final Flash, nada de debilidades.",
+    "confirmPassword": "Confirma esa contraseña, no me hagas perder tiempo corrigiendo errores.",
+    "cancelButton": "Cancelar",
+    "submitButton": "Enviar"
+  },
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "No tienes mensajes nuevos. ¿Esperabas algo mejor?",
+      "=1": "Tienes 1 mensaje nuevo. No te duermas.",
+      ">1": "Tienes {count} mensajes. ¿Puedes seguir el ritmo?"
+    },
+    "docsButton": "Documentación Técnica"
+  }
+}

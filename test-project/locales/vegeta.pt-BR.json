@@ -1,0 +1,20 @@
+{
+  "user_info": {
+    "name": "Qual é o seu nome completo, guerreiro?",
+    "email": "Informe seu endereço de e-mail. Não perca tempo.",
+    "socialnetwork": "Qual é sua rede social? Mostre seu domínio.",
+    "address": "Declare seu endereço físico. Não esconda nada.",
+    "password": "Defina uma senha forte. Quebre limites, não códigos.",
+    "confirmPassword": "Confirme sua senha. Nada de erros amadores.",
+    "cancelButton": "Cancelar",
+    "submitButton": "Enviar"
+  },
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "Nenhuma mensagem nova. Sem desculpas.",
+      "=1": "Tem 1 mensagem. Não me faça repetir.",
+      ">1": "Tem {count} mensagens. Prepare-se para lutar."
+    },
+    "docsButton": "Documentação Técnica"
+  }
+}

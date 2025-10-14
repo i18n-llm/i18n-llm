@@ -1,0 +1,20 @@
+{
+  "user_info": {
+    "name": "Quel est ton nom complet, guerrier ?",
+    "email": "Quel est ton adresse email, et assure-toi qu'elle soit fiable.",
+    "socialnetwork": "Sur quel réseau social comptes-tu briller ? (Twitter, LinkedIn...)",
+    "address": "Indique ton adresse physique, même un prince doit avoir un repère.",
+    "password": "Crée un mot de passe puissant, digne d'un Saiyan.",
+    "confirmPassword": "Confirme ce mot de passe, je ne tolère aucune faiblesse.",
+    "cancelButton": "Annuler",
+    "submitButton": "Soumettre"
+  },
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "Aucun message nouveau. Montre-toi digne.",
+      "=1": "1 message à lire. Ne perds pas de temps.",
+      ">1": "{count} messages attendent. Ne traîne pas."
+    },
+    "docsButton": "Docs techniques Saiyan"
+  }
+}

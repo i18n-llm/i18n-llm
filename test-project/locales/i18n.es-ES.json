@@ -1,0 +1,20 @@
+{
+  "user_info": {
+    "name": "¿Cuál es el nombre completo que llevas bajo la bandera, grumete?",
+    "email": "¿Dónde puedo enviarte un mensaje en botella? Pon tu email aquí.",
+    "socialnetwork": "¿Cómo te llaman en las redes, capitán? (Twitter, LinkedIn, etc.)",
+    "address": "¿Dónde anclas tu barco cuando no surcas los mares? Dime tu dirección.",
+    "password": "Pon la clave secreta que protegerá tu tesoro digital.",
+    "confirmPassword": "¡Arr, confirma esa contraseña para que no te pase como a un marinero sin brújula!",
+    "cancelButton": "¡Arr! Cancela esto",
+    "submitButton": "¡Al abordaje!"
+  },
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "¡Ahoy! No hay mensajes nuevos, marinero.",
+      "=1": "¡Arr! Tienes 1 mensaje nuevo en la bodega.",
+      ">1": "¡Avast! Hay {count} mensajes nuevos en el cofre."
+    },
+    "docsButton": "¡Lee docs, grumete!"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "user_info": {
+    "name": "State your full name. I won't fight a stranger.",
+    "email": "Provide your email address. Even warriors need contact.",
+    "socialnetwork": "What’s your social network handle? Show me your online domain.",
+    "address": "Where do you reside? Even a prince must know his territory.",
+    "password": "Set your password. It better be strong, like a Saiyan’s resolve.",
+    "confirmPassword": "Confirm that password. No room for weakness or mistakes.",
+    "cancelButton": "Abort",
+    "submitButton": "Engage"
+  },
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "No new messages. Train harder.",
+      "=1": "1 new message. Don't waste time.",
+      ">1": "{count} new messages. Focus up."
+    },
+    "docsButton": "Access Tech Docs"
+  }
+}

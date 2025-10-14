@@ -1,0 +1,20 @@
+{
+  "user_info": {
+    "name": "What be yer full pirate name, matey?",
+    "email": "Where do ye send yer electronic parrot messages (email)?",
+    "socialnetwork": "What's yer social sea network handle, like Twitter or LinkedIn?",
+    "address": "Where does yer ship dock? Give us yer full landlubber address.",
+    "password": "Create a secret code to guard yer treasure (password).",
+    "confirmPassword": "Avast! Type yer secret code again to make sure ye ain't a landlubber tyin' knots in the wrong place.",
+    "cancelButton": "Abandon Ship!",
+    "submitButton": "Hoist the Colors!"
+  },
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "Ahoy! No new messages, matey!",
+      "=1": "Avast! Ye've got 1 new message!",
+      ">1": "Blimey! {count} new messages await ye!"
+    },
+    "docsButton": "Consult the Ship's Logs"
+  }
+}

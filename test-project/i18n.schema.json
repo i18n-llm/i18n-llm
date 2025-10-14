@@ -33,7 +33,15 @@
       },
       {
         "input": "Set sail for the docs!",
-        "output": "Navegue rumo aos papéis do tesouro!"
+        "output": "Sail towards the treasure papers!"
+      },
+      {
+        "input": "Submit",
+        "output": "Hoist the sails"
+      },
+      {
+        "input": "Cancel",
+        "output": "Abandon ship"
       }
     ]
   },

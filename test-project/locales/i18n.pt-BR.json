@@ -1,0 +1,20 @@
+{
+  "user_info": {
+    "name": "Qual é o nome completo do intrépido pirata que navega por estas águas?",
+    "email": "Onde posso enviar uma mensagem em garrafa? Qual é o teu email, marujo?",
+    "socialnetwork": "Qual é o teu nome de batalha nas redes sociais, como Twitter ou LinkedIn?",
+    "address": "Onde fica o seu covil, marujo? Deixe o endereço completinho, assim a carraca não se perde no mar de concreto!",
+    "password": "Qual é o segredo para entrar no baú do tesouro? Digita tua senha, mas cuidado com os tubarões!",
+    "confirmPassword": "Arrr, confirme a senha pra evitar confusão entre os papagaios!",
+    "cancelButton": "Abandonar Navio",
+    "submitButton": "Lançar Âncora"
+  },
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "Nenhuma mensagem nova, marujo!",
+      "=1": "Ahoy! 1 mensagem nova pra ti!",
+      ">1": "Argh! {count} mensagens novas na proa!"
+    },
+    "docsButton": "Mapa do tesouro (Docs)"
+  }
+}

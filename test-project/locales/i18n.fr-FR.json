@@ -1,0 +1,20 @@
+{
+  "user_info": {
+    "name": "Comment t'appelles-tu, matelot ? Balance ton nom complet, sans oublier les titres de pirate !",
+    "email": "Par quel pigeon voyageur puis-je t'envoyer mes missives ? Donne-moi ton adresse mail, moussaillon !",
+    "socialnetwork": "Sur quel pont virtuel on te trouve ? Balance ton pseudo Twitter, LinkedIn ou autre rade pirate !",
+    "address": "Où est amarré ton navire ? File-moi ton adresse complète, que je sache où jeter l'ancre !",
+    "password": "Crée un mot de passe solide comme le bois d'un navire en pleine tempête, capitaine !",
+    "confirmPassword": "Arrr, peux-tu confirmer ton mot de passe, moussaillon, pour que j'sois sûr que t'es pas un imposteur pirate ?",
+    "cancelButton": "Abandonner",
+    "submitButton": "Cap sur l'envoi !"
+  },
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "Ahoy, matelot ! Aucun message neuf pour l’instant.",
+      "=1": "Arrr ! Tu as 1 message neuf, moussaillon.",
+      ">1": "Arrr ! {count} messages neufs pour toi, capitaine."
+    },
+    "docsButton": "Cap sur la doc technique"
+  }
+}
