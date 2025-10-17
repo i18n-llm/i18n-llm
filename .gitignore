@@ -1,0 +1,63 @@
+# ============================================
+# i18n-llm Monorepo .gitignore
+# ============================================
+
+# i18n-llm generated files (em qualquer subprojeto)
+**/locales/
+**/locale/
+**/*.i18n.json
+**/.i18n-llm-state.json
+
+# Node.js
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+**/lerna-debug.log*
+
+# Build outputs
+**/dist/
+**/build/
+**/*.tsbuildinfo
+
+# Environment variables
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# IDE
+.vscode/
+.idea/
+**/*.swp
+**/*.swo
+**/*~
+
+# Testing
+**/coverage/
+**/.nyc_output/
+**/*.lcov
+
+# Vitest
+**/.vitest/
+**/node_modules/.vite/
+
+# Temporary files
+**/*.log
+**/*.tmp
+**/.cache/
+**/.temp/
+**/tmp/
+
+# OS
+.DS_Store
+**/Thumbs.db
+**/.DS_Store
+
+# Monorepo specific
+.pnpm-store/
+.turbo/
+.rush/
+
