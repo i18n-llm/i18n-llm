@@ -7,6 +7,9 @@ interface ReviewIssue {
   key: string;
   sourceText: string;
   translatedText: string;
+  score: number;
+  suggestions: string[];
+  approved: boolean;
   isToneConsistent: boolean;
   isGrammaticallyCorrect: boolean;
   obeysLengthConstraint: boolean;
@@ -191,7 +194,7 @@ async function reviewObject(
               sourceText,
               translatedText: translationValue[pluralKey],
               ...result,
-            });
+            } as ReviewIssue);  // ← Adicionar isso
           }
         }
       }
@@ -211,7 +214,7 @@ async function reviewObject(
           sourceText,
           translatedText: translationValue,
           ...result,
-        });
+        } as ReviewIssue);  // ← Adicionar isso
       }
     }
     // Se for um objeto aninhado (não tem description)

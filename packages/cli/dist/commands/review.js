@@ -180,7 +180,7 @@ async function reviewObject(schemaNode, translationNode, currentPath, language, 
                             sourceText,
                             translatedText: translationValue[pluralKey],
                             ...result,
-                        });
+                        }); // ← Adicionar isso
                     }
                 }
             }
@@ -199,7 +199,7 @@ async function reviewObject(schemaNode, translationNode, currentPath, language, 
                     sourceText,
                     translatedText: translationValue,
                     ...result,
-                });
+                }); // ← Adicionar isso
             }
         }
         // Se for um objeto aninhado (não tem description)

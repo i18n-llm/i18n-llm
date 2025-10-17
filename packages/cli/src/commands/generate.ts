@@ -1,315 +1,449 @@
 import { Command } from 'commander';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
+import { loadConfig, I18nLLMConfig } from '../core/config-loader';
+import { parseSchema, I18nSchema, Entity, KeySchema } from '../core/schema-parser';
+import { loadState, saveState, TranslationState } from '../core/state-manager';
 import { OpenAIProvider } from '../core/llm/providers/openai';
+import { LLMProvider, PluralizedTranslation, TranslationParams } from '../core/llm/llm-provider';
+import { BatchTranslationItem, BatchMetadata } from '../core/llm/llm-provider';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
-// Função para gerar hash MD5
-function generateHash(content: string): string {
-  return crypto.createHash('md5').update(content).digest('hex').substring(0, 8);
+function setNestedValue(obj: any, path: string[], value: any) {
+  let current = obj;
+  for (let i = 0; i < path.length - 1; i++) {
+    const key = path[i];
+    if (!current[key] || typeof current[key] !== 'object') {
+      current[key] = {};
+    }
+    current = current[key];
+  }
+  current[path[path.length - 1]] = value;
 }
 
-// Função para gerar hash do schema de uma chave
-function generateSchemaHash(schemaValue: any, persona: any, glossary: any): string {
-  const content = JSON.stringify({
-    description: schemaValue.description,
-    constraints: schemaValue.constraints,
-    context: schemaValue.context,
-    category: schemaValue.category,
-    pluralization: schemaValue.pluralization,
-    params: schemaValue.params,
-    persona,
-    glossary
-  });
-  return generateHash(content);
+function getNestedValue(obj: any, path: string[]): any {
+  let current = obj;
+  for (const part of path) {
+    if (current && typeof current === 'object' && part in current) {
+      current = current[part];
+    } else {
+      return undefined;
+    }
+  }
+  return current;
 }
 
-interface StateEntry {
-  hash: string;
-  schemaHash: string;
+function getGroupKey(context: any, schemaIndex: number, language: string): string {
+  const entityContext = context?.entity || 'no-context';
+  return `${language}::${schemaIndex}::${entityContext}`;
 }
 
-interface State {
-  version: string;
-  lastGenerated: string;
-  translations: {
-    [key: string]: StateEntry;
+function extractPrefixFromSchemaPath(schemaPath: string): string {
+  const basename = path.basename(schemaPath);
+  const match = basename.match(/^(.+)\.schema\.json$/);
+  return match ? match[1] : 'translations';
+}
+
+function makeStateKey(prefix: string, entityName: string, keyName: string): string {
+  return `${prefix}::${entityName}.${keyName}`;
+}
+
+function parseStateKey(stateKey: string): { prefix: string; entityName: string; keyName: string } | null {
+  const match = stateKey.match(/^(.+?)::(.+?)\.(.+)$/);
+  if (!match) return null;
+  return {
+    prefix: match[1],
+    entityName: match[2],
+    keyName: match[3],
   };
 }
 
-function loadUsageTotals(): { requests: number; cost: number } {
-  try {
-    const usagePath = path.resolve(process.cwd(), '.i18n-llm-usage.json');
-    if (fs.existsSync(usagePath)) {
-      const usage = JSON.parse(fs.readFileSync(usagePath, 'utf-8'));
-      return {
-        requests: usage.totals?.requests || 0,
-        cost: usage.totals?.estimatedCost || 0,
-      };
-    }
-  } catch (error) {
-    // Ignorar erros
-  }
-  return { requests: 0, cost: 0 };
-}
-
 export const generateCommand = new Command('generate')
-  .description('Generate translations based on the schema')
-  .option('-f, --force', 'Force regeneration of all translations, ignoring cache')
+  .description('Generates translation files based on the schema.')
+  .option('--force', 'Force regeneration of all keys, ignoring cache')
+  .option('--debug', 'Enable debug logging for troubleshooting')
   .action(async (options) => {
     try {
-      console.log('🚀 Starting translation generation...\n');
-
-      // Capturar totais antes da execução
-      const beforeUsage = loadUsageTotals();
-
-      const configPath = path.resolve(process.cwd(), 'i18n-llm.config.js');
-      if (!fs.existsSync(configPath)) {
-        console.error('❌ Config file not found: i18n-llm.config.js');
-        process.exit(1);
+      console.log('🚀 Starting translation generation process...');
+      
+      const forceRegenerate = options.force || false;
+      const debugMode = options.debug || false;
+      
+      if (forceRegenerate) {
+        console.log('⚠️  Force mode enabled - ignoring cache and regenerating all keys');
+      }
+      if (debugMode) {
+        console.log('🐛 Debug mode enabled');
       }
 
-      const config = require(configPath);
+      const config: I18nLLMConfig = loadConfig();
+      console.log('✔️ Config loaded and validated.');
 
-      const apiKey = process.env.OPENAI_API_KEY || config.llm?.apiKey;
-      if (!apiKey) {
-        console.error('❌ OpenAI API key not found. Set OPENAI_API_KEY environment variable or add it to config.');
-        process.exit(1);
+      const state: TranslationState = loadState(config.statePath);
+      const provider: LLMProvider = new OpenAIProvider(process.env.OPENAI_API_KEY!, config.providerConfig.model);
+
+      const allSchemaData: { 
+        schema: I18nSchema; 
+        resolvedPath: string;
+        prefix: string;
+      }[] = [];
+      
+      for (const schemaPath of config.schemaFiles) {
+        const resolvedPath = path.resolve(process.cwd(), schemaPath);
+        const schema = parseSchema(resolvedPath);
+        const prefix = extractPrefixFromSchemaPath(resolvedPath);
+        allSchemaData.push({ schema, resolvedPath, prefix });
       }
 
-      const provider = new OpenAIProvider(apiKey, config.llm?.model);
-
-      const schemaPath = path.resolve(process.cwd(), config.schemaPath || 'i18n.schema.json');
-      if (!fs.existsSync(schemaPath)) {
-        console.error(`❌ Schema file not found: ${schemaPath}`);
-        process.exit(1);
-      }
-
-      const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
-
-      const outputDir = path.resolve(process.cwd(), config.outputDir || 'locales');
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-
-      // Carregar state existente
-      const statePath = path.resolve(process.cwd(), '.i18n-llm-state.json');
-      let state: State = {
-        version: schema.version || '1.0',
-        lastGenerated: new Date().toISOString(),
-        translations: {}
-      };
-
-      if (fs.existsSync(statePath) && !options.force) {
-        try {
-          state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
-          console.log('📦 Loaded existing state (incremental mode)\n');
-        } catch (error) {
-          console.warn('⚠️  Could not load state file, starting fresh\n');
+      // ========================================
+      // STEP 1: Clean up deleted keys from state
+      // ========================================
+      console.log('\n--- Step 1: State Cleanup ---');
+      const allValidKeys = new Set<string>();
+      for (const { schema, prefix } of allSchemaData) {
+        for (const entityName in schema.entities) {
+          const entity = schema.entities[entityName];
+          for (const keyName in entity) {
+            if (keyName === '_context' || keyName === 'context') continue;
+            const stateKey = makeStateKey(prefix, entityName, keyName);
+            allValidKeys.add(stateKey);
+          }
         }
-      } else if (options.force) {
-        console.log('🔄 Force mode: regenerating all translations\n');
       }
 
-      const newState: State = {
-        version: schema.version || '1.0',
-        lastGenerated: new Date().toISOString(),
-        translations: {}
-      };
+      let deletedCount = 0;
+      for (const stateKey in state) {
+        if (!allValidKeys.has(stateKey)) {
+          if (debugMode) {
+            console.log(`  - 🗑️  Removing deleted key from state: '${stateKey}'`);
+          }
+          delete state[stateKey];
+          deletedCount++;
+        }
+      }
 
-      for (const targetLanguage of schema.targetLanguages || config.languages) {
-        console.log(`\n🌍 Generating translations for: ${targetLanguage}`);
+      if (deletedCount > 0) {
+        console.log(`  - 🗑️  Removed ${deletedCount} deleted key(s) from state`);
+        saveState(state, config.statePath);
+      } else {
+        console.log('  - ✅ No deleted keys found in state');
+      }
 
-        const outputPath = path.resolve(outputDir, `${targetLanguage}.json`);
+      // ========================================
+      // STEP 2: Detect missing keys in output files
+      // ========================================
+      console.log('\n--- Step 2: Detecting Missing Translations ---');
+      const missingKeys = new Set<string>();
+      fs.mkdirSync(config.outputDir, { recursive: true });
+      
+      for (const { schema, prefix } of allSchemaData) {
+        const allTargetLangs = new Set([...schema.targetLanguages, config.sourceLanguage]);
         
-        // Carregar traduções existentes se houver
-        let existingTranslations: any = {};
-        if (fs.existsSync(outputPath)) {
-          existingTranslations = JSON.parse(fs.readFileSync(outputPath, 'utf-8'));
+        for (const lang of allTargetLangs) {
+          const langFilePath = path.join(config.outputDir, `${prefix}.${lang}.json`);
+          
+          if (!fs.existsSync(langFilePath)) {
+            if (debugMode) {
+              console.log(`  - 📄 Missing output file detected: ${path.basename(langFilePath)}`);
+            }
+            // Mark all keys for this language as missing
+            for (const entityName in schema.entities) {
+              const entity = schema.entities[entityName];
+              for (const keyName in entity) {
+                if (keyName === '_context' || keyName === 'context') continue;
+                const stateKey = makeStateKey(prefix, entityName, keyName);
+                missingKeys.add(`${stateKey}::${lang}`);
+              }
+            }
+          } else {
+            // File exists - check for missing keys within it
+            try {
+              const existingContent = JSON.parse(fs.readFileSync(langFilePath, 'utf-8'));
+              
+              for (const entityName in schema.entities) {
+                const entity = schema.entities[entityName];
+                for (const keyName in entity) {
+                  if (keyName === '_context' || keyName === 'context') continue;
+                  
+                  const fullPath = `${entityName}.${keyName}`.split('.');
+                  const value = getNestedValue(existingContent, fullPath);
+                  
+                  if (value === undefined) {
+                    const stateKey = makeStateKey(prefix, entityName, keyName);
+                    missingKeys.add(`${stateKey}::${lang}`);
+                    if (debugMode) {
+                      console.log(`  - 🔍 Missing key in ${path.basename(langFilePath)}: ${entityName}.${keyName}`);
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.log(`  - ⚠️  Error reading ${path.basename(langFilePath)}, will regenerate all keys`);
+              for (const entityName in schema.entities) {
+                const entity = schema.entities[entityName];
+                for (const keyName in entity) {
+                  if (keyName === '_context' || keyName === 'context') continue;
+                  const stateKey = makeStateKey(prefix, entityName, keyName);
+                  missingKeys.add(`${stateKey}::${lang}`);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (missingKeys.size > 0) {
+        console.log(`  - 🔍 Found ${missingKeys.size} missing translation(s) in output files`);
+      } else {
+        console.log('  - ✅ All translations present in output files');
+      }
+
+      // ========================================
+      // STEP 3: Generate texts directly in each language
+      // ========================================
+      console.log('\n--- Step 3: Generating Texts in All Languages ---');
+      
+      // Build generation queue grouped by language
+      const generationQueue: Array<{
+        stateKey: string;
+        entityName: string;
+        keyName: string;
+        description: string;
+        targetLanguage: string;
+        context: any;
+        category?: string;
+        isPlural: boolean;
+        params?: any;
+        constraints?: any;
+        schemaIndex: number;
+        prefix: string;
+      }> = [];
+
+      for (let schemaIndex = 0; schemaIndex < allSchemaData.length; schemaIndex++) {
+        const { schema, prefix } = allSchemaData[schemaIndex];
+        const allLanguages = new Set([...schema.targetLanguages, config.sourceLanguage]);
+        
+        for (const entityName in schema.entities) {
+          const entity = schema.entities[entityName];
+          const entityContext = (entity as any).context || (entity as any)._context;
+
+          for (const keyName in entity) {
+            if (keyName === '_context' || keyName === 'context') continue;
+
+            const keyData = entity[keyName] as KeySchema;
+            const stateKey = makeStateKey(prefix, entityName, keyName);
+            const descHash = crypto.createHash('md5').update(keyData.description).digest('hex');
+
+            const existingState = state[stateKey];
+            
+            // Initialize state if needed
+            if (!existingState) {
+              state[stateKey] = {
+                hash: descHash,
+                texts: {},
+              };
+            } else if (existingState.hash !== descHash) {
+              // Hash changed - update and clear old texts
+              existingState.hash = descHash;
+              existingState.texts = {};
+            }
+
+            // Check each language
+            for (const targetLang of allLanguages) {
+              const keyIsMissing = missingKeys.has(`${stateKey}::${targetLang}`);
+              const textExists = state[stateKey].texts && state[stateKey].texts[targetLang];
+              const hashChanged = existingState && existingState.hash !== descHash;
+              const needsGeneration = forceRegenerate || !textExists || hashChanged || keyIsMissing;
+
+              if (needsGeneration) {
+                if (debugMode) {
+                  const reason = forceRegenerate ? 'force' : !textExists ? 'new' : hashChanged ? 'changed' : 'missing';
+                  console.log(`  - 🔄 Queuing '${entityName}.${keyName}' for ${targetLang} (reason: ${reason})`);
+                }
+
+                generationQueue.push({
+                  stateKey,
+                  entityName,
+                  keyName,
+                  description: keyData.description,
+                  targetLanguage: targetLang,
+                  context: { entity: entityContext, key: keyData.context },
+                  category: keyData.category,
+                  isPlural: keyData.pluralization || false,
+                  params: keyData.params,
+                  constraints: keyData.constraints,
+                  schemaIndex,
+                  prefix,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      if (generationQueue.length === 0) {
+        console.log('  - ✅ All texts are up to date.');
+      } else {
+        console.log(`  - 🔄 Found ${generationQueue.length} texts to generate...`);
+
+        // Group items by language + schema + context for batch processing
+        const groupedItems = new Map<string, typeof generationQueue>();
+        for (const item of generationQueue) {
+          const groupKey = getGroupKey(item.context, item.schemaIndex, item.targetLanguage);
+          if (!groupedItems.has(groupKey)) {
+            groupedItems.set(groupKey, []);
+          }
+          groupedItems.get(groupKey)!.push(item);
         }
 
-        const translations: any = {};
+        console.log(`  - 📦 Grouped into ${groupedItems.size} batches by language + schema + context\n`);
 
-        await processEntity(
-          schema.entities,
-          translations,
-          '',
-          targetLanguage,
-          schema.sourceLanguage || 'en-US',
-          schema.persona,
-          schema.glossary,
-          provider,
-          state,
-          newState,
-          existingTranslations
-        );
+        let batchNum = 0;
+        let successCount = 0;
 
-        fs.writeFileSync(outputPath, JSON.stringify(translations, null, 2), 'utf-8');
-        console.log(`  ✅ Saved: ${outputPath}`);
+        for (const [groupKey, items] of groupedItems) {
+          batchNum++;
+          const [lang, schemaIdx, ...contextParts] = groupKey.split('::');
+          const contextLabel = contextParts.join('::') === 'no-context' ? 'no-context' : `"${contextParts.join('::').substring(0, 50)}..."`;
+          console.log(`  - 🔄 Batch ${batchNum}/${groupedItems.size} (${items.length} items, lang: ${lang}, context: ${contextLabel})...`);
+
+          try {
+            const batchItems: BatchTranslationItem[] = items.map(item => ({
+              key: item.stateKey,
+              sourceText: item.description,
+              isPlural: item.isPlural,
+              maxLength: item.constraints?.maxLength,
+            }));
+
+            const metadata: BatchMetadata = {
+              context: items[0].context?.entity,
+              category: items[0].category,
+            };
+
+            const schemaData = allSchemaData[items[0].schemaIndex];
+            const persona = schemaData.schema.persona || config.persona;
+            const glossary = schemaData.schema.glossary || config.glossary;
+
+            // Generate directly in target language (not translation)
+            const results = await provider.translateBatch(
+              batchItems,
+              items[0].targetLanguage,
+              items[0].targetLanguage,  // Same language = generation mode
+              persona,
+              glossary,
+              metadata
+            );
+
+            for (const item of items) {
+              const generated = results[item.stateKey];
+              if (generated) {
+                if (!state[item.stateKey].texts) {
+                  state[item.stateKey].texts = {};
+                }
+                state[item.stateKey].texts[item.targetLanguage] = generated;
+                successCount++;
+                if (debugMode) {
+                  console.log(`     - ✅ Generated '${item.entityName}.${item.keyName}' in ${item.targetLanguage}`);
+                }
+              } else {
+                console.warn(`     - ⚠️  No result for '${item.entityName}.${item.keyName}' (${item.targetLanguage})`);
+              }
+            }
+
+            saveState(state, config.statePath);
+
+          } catch (error: any) {
+            console.error(`     - ❌ Batch failed: ${error.message}`);
+            console.log(`     - 🔄 Falling back to individual processing...`);
+
+            // Fallback to individual processing
+            for (const item of items) {
+              try {
+                const schemaData = allSchemaData[item.schemaIndex];
+                const persona = schemaData.schema.persona || config.persona;
+                const glossary = schemaData.schema.glossary || config.glossary;
+
+                const generated = await provider.translate({
+                  sourceText: item.description,
+                  targetLanguage: item.targetLanguage,
+                  sourceLanguage: item.targetLanguage,  // Same = generation mode
+                  persona: persona,
+                  glossary: glossary,
+                  context: item.context,
+                  category: item.category,
+                  isPlural: item.isPlural,
+                  params: item.params,
+                  constraints: item.constraints,
+                });
+
+                if (!state[item.stateKey].texts) {
+                  state[item.stateKey].texts = {};
+                }
+                state[item.stateKey].texts[item.targetLanguage] = generated;
+                successCount++;
+                console.log(`     - ✅ Generated '${item.entityName}.${item.keyName}' in ${item.targetLanguage}`);
+              } catch (indivError: any) {
+                console.error(`     - ❌ Failed to generate '${item.entityName}.${item.keyName}' in ${item.targetLanguage}: ${indivError.message}`);
+              }
+            }
+
+            saveState(state, config.statePath);
+          }
+        }
+
+        console.log(`\n  - ✅ Step 3 complete: ${successCount}/${generationQueue.length} texts generated`);
       }
 
-      // Salvar novo state
-      fs.writeFileSync(statePath, JSON.stringify(newState, null, 2), 'utf-8');
-      console.log(`\n💾 State saved: ${statePath}`);
-      console.log('\n✨ Translation generation complete!');
+      // ========================================
+      // STEP 4: Write output files
+      // ========================================
+      console.log('\n--- Step 4: Writing Output Files ---');
+      fs.mkdirSync(config.outputDir, { recursive: true });
 
-      // Mostrar relatório de custo
-      const afterUsage = loadUsageTotals();
-      const requestsThisRun = afterUsage.requests - beforeUsage.requests;
-      const costThisRun = afterUsage.cost - beforeUsage.cost;
+      for (const { schema, prefix } of allSchemaData) {
+        const allTargetLangs = new Set([...schema.targetLanguages, config.sourceLanguage]);
 
-      if (requestsThisRun > 0) {
-        console.log('\n📊 Usage Report:');
-        console.log(`   This run: $${costThisRun.toFixed(4)} (${requestsThisRun} requests)`);
-        console.log(`   Total accumulated: $${afterUsage.cost.toFixed(4)} (${afterUsage.requests} requests)`);
+        for (const lang of allTargetLangs) {
+          const langFilePath = path.join(config.outputDir, `${prefix}.${lang}.json`);
+          const langFileContent = {};
+
+          for (const entityName in schema.entities) {
+            const entity = schema.entities[entityName];
+
+            for (const keyName in entity) {
+              if (keyName === '_context' || keyName === 'context') continue;
+
+              const stateKey = makeStateKey(prefix, entityName, keyName);
+              const stateEntry = state[stateKey];
+
+              if (!stateEntry || !stateEntry.texts) continue;
+
+              const textToSet = stateEntry.texts[lang];
+
+              if (textToSet) {
+                setNestedValue(langFileContent, `${entityName}.${keyName}`.split('.'), textToSet);
+              }
+            }
+          }
+
+          try {
+            fs.writeFileSync(langFilePath, JSON.stringify(langFileContent, null, 2));
+            console.log(`  - 💾 Wrote file: ${langFilePath}`);
+          } catch (error) {
+            console.error(`  - ❌ Failed to write file: ${langFilePath}`, error);
+          }
+        }
       }
+
+      saveState(state, config.statePath);
+      console.log('\n✔️ State file updated.');
+      console.log('🎉 Translation generation complete!');
+      console.log('\n💡 Note: Each language is now generated directly from the schema description,');
+      console.log('   allowing for more culturally appropriate and natural translations.');
 
     } catch (error) {
-      console.error('❌ Generation failed:', error);
-      
-      // Mostrar custo mesmo em caso de erro
-      const afterUsage = loadUsageTotals();
-      if (afterUsage.requests > 0) {
-        console.log(`\n💰 Accumulated cost: $${afterUsage.cost.toFixed(4)} (${afterUsage.requests} requests)`);
-      }
-      
+      console.error('\n❌ An unexpected error occurred:', error);
       process.exit(1);
     }
   });
 
-async function processEntity(
-  entity: any,
-  output: any,
-  path: string,
-  targetLanguage: string,
-  sourceLanguage: string,
-  persona: any,
-  glossary: any,
-  provider: OpenAIProvider,
-  oldState: State,
-  newState: State,
-  existingTranslations: any
-): Promise<void> {
-  for (const key in entity) {
-    if (key.startsWith('_')) {
-      continue;
-    }
-
-    const value = entity[key];
-    const currentPath = path ? `${path}.${key}` : key;
-
-    if (value.description) {
-      const schemaHash = generateSchemaHash(value, persona, glossary);
-      
-      if (value.pluralization) {
-        const existingPlural = existingTranslations[key];
-        const firstPluralPath = `${currentPath}.=0`;
-        const oldStateEntry = oldState.translations ? oldState.translations[firstPluralPath] : undefined;
-        
-        // Verificar se precisa re-traduzir (verifica apenas uma vez)
-        const needsTranslation = !existingPlural || 
-                                 !existingPlural['=0'] ||
-                                 !oldStateEntry || 
-                                 oldStateEntry.schemaHash !== schemaHash;
-
-        if (needsTranslation) {
-          console.log(`  🔄 Translating: ${currentPath} (plural)`);
-          
-          const result = await provider.translate({
-            sourceText: value.description,
-            sourceLanguage,
-            targetLanguage,
-            persona,
-            glossary,
-            context: value.context,
-            category: value.category,
-            isPlural: true,
-            params: value.params,
-            constraints: value.constraints,
-          });
-
-          // Cast seguro para objeto de pluralização
-          const pluralResult = result as { [key: string]: string };
-          output[key] = pluralResult;
-          
-          // Salvar hash de cada forma plural
-          for (const pk of ['=0', '=1', '>1']) {
-            if (pluralResult[pk]) {
-              newState.translations[`${currentPath}.${pk}`] = {
-                hash: generateHash(pluralResult[pk]),
-                schemaHash
-              };
-            }
-          }
-        } else {
-          console.log(`  ✓ Cached: ${currentPath} (plural)`);
-          output[key] = existingPlural;
-          
-          // Manter hash existente para todas as formas plurais
-          for (const pk of ['=0', '=1', '>1']) {
-            if (existingPlural[pk]) {
-              newState.translations[`${currentPath}.${pk}`] = {
-                hash: generateHash(existingPlural[pk]),
-                schemaHash
-              };
-            }
-          }
-        }
-      } else {
-        const existingTranslation = existingTranslations[key];
-        const oldStateEntry = oldState.translations ? oldState.translations[currentPath] : undefined;
-        
-        const needsTranslation = !existingTranslation || 
-                                 !oldStateEntry || 
-                                 oldStateEntry.schemaHash !== schemaHash;
-
-        if (needsTranslation) {
-          console.log(`  🔄 Translating: ${currentPath}`);
-          
-          const result = await provider.translate({
-            sourceText: value.description,
-            sourceLanguage,
-            targetLanguage,
-            persona,
-            glossary,
-            context: value.context,
-            category: value.category,
-            isPlural: false,
-            params: value.params,
-            constraints: value.constraints,
-          });
-
-          output[key] = result;
-          
-          newState.translations[currentPath] = {
-            hash: generateHash(result as string),
-            schemaHash
-          };
-        } else {
-          console.log(`  ✓ Cached: ${currentPath}`);
-          output[key] = existingTranslation;
-          
-          newState.translations[currentPath] = {
-            hash: generateHash(existingTranslation),
-            schemaHash
-          };
-        }
-      }
-    } else {
-      output[key] = {};
-      await processEntity(
-        value,
-        output[key],
-        currentPath,
-        targetLanguage,
-        sourceLanguage,
-        persona,
-        glossary,
-        provider,
-        oldState,
-        newState,
-        existingTranslations[key] || {}
-      );
-    }
-  }
-}
