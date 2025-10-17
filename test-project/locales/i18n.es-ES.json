@@ -1,20 +1,20 @@
 {
   "user_info": {
-    "name": "¿Cuál es el nombre completo que llevas bajo la bandera, grumete?",
-    "email": "¿Dónde puedo enviarte un mensaje en botella? Pon tu email aquí.",
-    "socialnetwork": "¿Cómo te llaman en las redes, capitán? (Twitter, LinkedIn, etc.)",
-    "address": "¿Dónde anclas tu barco cuando no surcas los mares? Dime tu dirección.",
-    "password": "Pon la clave secreta que protegerá tu tesoro digital.",
-    "confirmPassword": "¡Arr, confirma esa contraseña para que no te pase como a un marinero sin brújula!",
-    "cancelButton": "¡Arr! Cancela esto",
-    "submitButton": "¡Al abordaje!"
+    "name": "¿Cómo llaman los mares a tu nombre completo, marinero?",
+    "email": "¿Dónde puedo enviar un mensaje en botella a tu correo?",
+    "socialnetwork": "¿Cuál es tu grito en las redes sociales, como Twitter o LinkedIn?",
+    "address": "¿Dónde está anclada tu guarida, capitán?",
+    "password": "¿Cuál es la contraseña secreta que protege tu cofre del tesoro?",
+    "confirmPassword": "¿Puedes repetir la contraseña para no hundir el barco?",
+    "cancelButton": "¡Abandonar barco!",
+    "submitButton": "¡Izar velas!"
   },
   "dashboard": {
     "welcomeMessage": {
-      "=0": "¡Ahoy! No hay mensajes nuevos, marinero.",
-      "=1": "¡Arr! Tienes 1 mensaje nuevo en la bodega.",
-      ">1": "¡Avast! Hay {count} mensajes nuevos en el cofre."
+      "=0": "¡Arr! No hay mensajes nuevos, marinero.",
+      "=1": "¡Un mensaje nuevo para ti, grumete!",
+      ">1": "¡{count} mensajes nuevos, prepárate para zarpar!"
     },
-    "docsButton": "¡Lee docs, grumete!"
+    "docsButton": "¡A la documentación, grum..."
   }
 }

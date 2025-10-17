@@ -1,20 +1,20 @@
 {
   "user_info": {
     "name": "Quel est ton nom complet, guerrier ?",
-    "email": "Quel est ton adresse email, et assure-toi qu'elle soit fiable.",
-    "socialnetwork": "Sur quel réseau social comptes-tu briller ? (Twitter, LinkedIn...)",
-    "address": "Indique ton adresse physique, même un prince doit avoir un repère.",
-    "password": "Crée un mot de passe puissant, digne d'un Saiyan.",
-    "confirmPassword": "Confirme ce mot de passe, je ne tolère aucune faiblesse.",
+    "email": "Donne ton adresse email, ne me fais pas perdre mon temps.",
+    "socialnetwork": "Quel est ton pseudo sur les réseaux sociaux ? Montre un peu de fierté.",
+    "address": "Indique ton adresse physique. Même un prince doit être localisable.",
+    "password": "Choisis un mot de passe puissant, pas une faiblesse.",
+    "confirmPassword": "Confirme ton mot de passe, pas question d'erreur ici.",
     "cancelButton": "Annuler",
     "submitButton": "Soumettre"
   },
   "dashboard": {
     "welcomeMessage": {
-      "=0": "Aucun message nouveau. Montre-toi digne.",
-      "=1": "1 message à lire. Ne perds pas de temps.",
-      ">1": "{count} messages attendent. Ne traîne pas."
+      "=0": "Aucun message. Montre ta force autrement.",
+      "=1": "1 message reçu. Ne perds pas de temps.",
+      ">1": "{count} messages reçus. Sois prêt à combattre."
     },
-    "docsButton": "Docs techniques Saiyan"
+    "docsButton": "Docs techniques"
   }
 }

@@ -3,70 +3,70 @@
     "hash": "a27bb7c74e98365fba6f6aae8667bea6",
     "texts": {
       "en": "What be yer full name, matey?",
-      "pt-BR": "Qual é o nome completo do intrépido pirata que navega por estas águas?",
-      "es-ES": "¿Cuál es el nombre completo que llevas bajo la bandera, grumete?",
-      "fr-FR": "Comment t'appelles-tu, matelot ? Balance ton nom complet, sans oublier les titres de pirate !",
-      "en-US": "What be yer full pirate name, matey?"
+      "pt-BR": "Qual é o nome completo que tu usas pra assinar teus mapas do tesouro?",
+      "es-ES": "¿Cómo llaman los mares a tu nombre completo, marinero?",
+      "fr-FR": "Quel nom de pirate portes-tu sur ce vaste océan ?",
+      "en-US": "What be yer full name, matey? Spell it out for this ol' sea dog."
     }
   },
   "i18n::user_info.email": {
     "hash": "c445905520e3784b382669dfa5f01491",
     "texts": {
       "en": "Where do the carrier pigeons send yer electronic mail?",
-      "pt-BR": "Onde posso enviar uma mensagem em garrafa? Qual é o teu email, marujo?",
-      "es-ES": "¿Dónde puedo enviarte un mensaje en botella? Pon tu email aquí.",
-      "fr-FR": "Par quel pigeon voyageur puis-je t'envoyer mes missives ? Donne-moi ton adresse mail, moussaillon !",
-      "en-US": "Where do ye send yer electronic parrot messages (email)?"
+      "pt-BR": "Qual é o teu endereço de email, marujo? Não me faça procurar no mapa!",
+      "es-ES": "¿Dónde puedo enviar un mensaje en botella a tu correo?",
+      "fr-FR": "Où puis-je t'envoyer mes missives numériques, moussaillon ?",
+      "en-US": "Where do the royal pigeons deliver yer messages? Enter yer email, savvy?"
     }
   },
   "i18n::user_info.socialnetwork": {
     "hash": "24a5810dd27c2af1490e2baf4c0deca9",
     "texts": {
       "en": "What's yer social media parrot's handle, like Twitter or LinkedIn?",
-      "pt-BR": "Qual é o teu nome de batalha nas redes sociais, como Twitter ou LinkedIn?",
-      "es-ES": "¿Cómo te llaman en las redes, capitán? (Twitter, LinkedIn, etc.)",
-      "fr-FR": "Sur quel pont virtuel on te trouve ? Balance ton pseudo Twitter, LinkedIn ou autre rade pirate !",
-      "en-US": "What's yer social sea network handle, like Twitter or LinkedIn?"
+      "pt-BR": "Qual é o teu nome de guerra nas redes sociais, marujo?",
+      "es-ES": "¿Cuál es tu grito en las redes sociales, como Twitter o LinkedIn?",
+      "fr-FR": "Quel est ton cri de ralliement sur les réseaux sociaux, matelot ?",
+      "en-US": "What's yer social network handle? Be it Twitter, LinkedIn, or some secret pirate signal."
     }
   },
   "i18n::user_info.address": {
     "hash": "1f3748c19181c7b6875c4e9856b18377",
     "texts": {
       "en": "Where does yer ship anchor? Give us the full coordinates.",
-      "pt-BR": "Onde fica o seu covil, marujo? Deixe o endereço completinho, assim a carraca não se perde no mar de concreto!",
-      "es-ES": "¿Dónde anclas tu barco cuando no surcas los mares? Dime tu dirección.",
-      "fr-FR": "Où est amarré ton navire ? File-moi ton adresse complète, que je sache où jeter l'ancre !",
-      "en-US": "Where does yer ship dock? Give us yer full landlubber address."
+      "pt-BR": "Onde fica a tua taverna ou esconderijo? Conta o endereço direitinho!",
+      "es-ES": "¿Dónde está anclada tu guarida, capitán?",
+      "fr-FR": "Où jeter l'ancre quand tu rentres au port ? Donne-moi ton repaire exact.",
+      "en-US": "Where can we find yer hideout on this vast ocean? Give us yer full address, no need to walk the plank."
     }
   },
   "i18n::user_info.password": {
     "hash": "4729fcca7a54a4ba4243f8bfd595a5eb",
     "texts": {
       "en": "Set yer secret code to guard the treasure chest.",
-      "pt-BR": "Qual é o segredo para entrar no baú do tesouro? Digita tua senha, mas cuidado com os tubarões!",
-      "es-ES": "Pon la clave secreta que protegerá tu tesoro digital.",
-      "fr-FR": "Crée un mot de passe solide comme le bois d'un navire en pleine tempête, capitaine !",
-      "en-US": "Create a secret code to guard yer treasure (password)."
+      "pt-BR": "Cria uma senha segura, nada de '1234', ou o papagaio vai dedurar!",
+      "es-ES": "¿Cuál es la contraseña secreta que protege tu cofre del tesoro?",
+      "fr-FR": "Quel mot secret garderas-tu pour protéger ton coffre aux trésors ?",
+      "en-US": "What be the secret code to yer treasure chest? Choose a strong password, or face Davy Jones!"
     }
   },
   "i18n::user_info.cancelButton": {
     "hash": "84778024b53536a553d446dcfdeb2900",
     "texts": {
       "en": "Abandon Ship",
-      "pt-BR": "Abandonar Navio",
-      "es-ES": "¡Arr! Cancela esto",
-      "fr-FR": "Abandonner",
-      "en-US": "Abandon Ship!"
+      "pt-BR": "Jogamos fora",
+      "es-ES": "¡Abandonar barco!",
+      "fr-FR": "Abandonner la quête",
+      "en-US": "Abort Mission"
     }
   },
   "i18n::user_info.submitButton": {
     "hash": "44a6e2b2302d4bb2170033cdd539e2f5",
     "texts": {
       "en": "Raise the Sails",
-      "pt-BR": "Lançar Âncora",
-      "es-ES": "¡Al abordaje!",
-      "fr-FR": "Cap sur l'envoi !",
-      "en-US": "Hoist the Colors!"
+      "pt-BR": "Lançar ao mar",
+      "es-ES": "¡Izar velas!",
+      "fr-FR": "Hissez haut !",
+      "en-US": "Hoist the Sails!"
     }
   },
   "i18n::dashboard.welcomeMessage": {
@@ -79,23 +79,23 @@
       },
       "pt-BR": {
         "=0": "Nenhuma mensagem nova, marujo!",
-        "=1": "Ahoy! 1 mensagem nova pra ti!",
-        ">1": "Argh! {count} mensagens novas na proa!"
+        "=1": "Tem 1 mensagem nova no convés!",
+        ">1": "Tem {count} mensagens novas pra ler, marujo!"
       },
       "es-ES": {
-        "=0": "¡Ahoy! No hay mensajes nuevos, marinero.",
-        "=1": "¡Arr! Tienes 1 mensaje nuevo en la bodega.",
-        ">1": "¡Avast! Hay {count} mensajes nuevos en el cofre."
+        "=0": "¡Arr! No hay mensajes nuevos, marinero.",
+        "=1": "¡Un mensaje nuevo para ti, grumete!",
+        ">1": "¡{count} mensajes nuevos, prepárate para zarpar!"
       },
       "fr-FR": {
-        "=0": "Ahoy, matelot ! Aucun message neuf pour l’instant.",
-        "=1": "Arrr ! Tu as 1 message neuf, moussaillon.",
-        ">1": "Arrr ! {count} messages neufs pour toi, capitaine."
+        "=0": "Ahoy! Aucun message neuf, moussaillon.",
+        "=1": "Yo-ho-ho! 1 message t'attend, capitaine.",
+        ">1": "Arrr! {count} messages t'attendent, matelot!"
       },
       "en-US": {
-        "=0": "Ahoy! No new messages, matey!",
-        "=1": "Avast! Ye've got 1 new message!",
-        ">1": "Blimey! {count} new messages await ye!"
+        "=0": "Ahoy! No new messages in yer inbox, matey!",
+        "=1": "Avast! Ye have 1 new message, ready to be plundered!",
+        ">1": "Arr! Ye have {count} new messages, fetch 'em quick!"
       }
     }
   },
@@ -103,10 +103,10 @@
     "hash": "b04277ee8a170089030cb35d5d272bff",
     "texts": {
       "en": "Consult the treasure map!",
-      "pt-BR": "Mapa do tesouro (Docs)",
-      "es-ES": "¡Lee docs, grumete!",
-      "fr-FR": "Cap sur la doc technique",
-      "en-US": "Consult the Ship's Logs"
+      "pt-BR": "Mapa do tesouro (docs)",
+      "es-ES": "¡A la documentación, grum...",
+      "fr-FR": "Cap vers docs, l'ami!",
+      "en-US": "Sail to Docs"
     }
   },
   "vegeta::user_info.name": {
@@ -114,59 +114,59 @@
     "texts": {
       "en": "State your full name clearly. No excuses.",
       "pt-BR": "Qual é o seu nome completo, guerreiro?",
-      "es-ES": "¿Cuál es tu nombre completo, para dejar claro quién domina aquí?",
+      "es-ES": "¿Cuál es tu nombre completo, mortal? No me hagas perder el tiempo.",
       "fr-FR": "Quel est ton nom complet, guerrier ?",
-      "en-US": "State your full name. I won't fight a stranger."
+      "en-US": "State your full name clearly. I won't waste time deciphering vague titles."
     }
   },
   "vegeta::user_info.email": {
     "hash": "c445905520e3784b382669dfa5f01491",
     "texts": {
       "en": "Enter the email you actually check. Don't waste my time.",
-      "pt-BR": "Informe seu endereço de e-mail. Não perca tempo.",
-      "es-ES": "Introduce tu dirección de correo electrónico, no me hagas repetirlo.",
-      "fr-FR": "Quel est ton adresse email, et assure-toi qu'elle soit fiable.",
-      "en-US": "Provide your email address. Even warriors need contact."
+      "pt-BR": "Informe seu endereço de email, rápido e preciso.",
+      "es-ES": "Dime la dirección de correo electrónico que usas para tus insignificantes asuntos.",
+      "fr-FR": "Donne ton adresse email, ne me fais pas perdre mon temps.",
+      "en-US": "Provide the email address where you expect to receive your notifications. Precision matters."
     }
   },
   "vegeta::user_info.socialnetwork": {
     "hash": "24a5810dd27c2af1490e2baf4c0deca9",
     "texts": {
       "en": "What’s your warrior tag on socials? Twitter, LinkedIn, whatever.",
-      "pt-BR": "Qual é sua rede social? Mostre seu domínio.",
-      "es-ES": "¿Cuál es tu identificador en redes sociales? Que se note tu presencia.",
-      "fr-FR": "Sur quel réseau social comptes-tu briller ? (Twitter, LinkedIn...)",
-      "en-US": "What’s your social network handle? Show me your online domain."
+      "pt-BR": "Qual é seu perfil nas redes sociais, para eu saber quem enfrenta meu nível?",
+      "es-ES": "¿Cuál es tu alias en las redes sociales? No me interesa, pero debo saberlo.",
+      "fr-FR": "Quel est ton pseudo sur les réseaux sociaux ? Montre un peu de fierté.",
+      "en-US": "What's your social network ID? Twitter, LinkedIn—make it known so I can find you."
     }
   },
   "vegeta::user_info.address": {
     "hash": "1f3748c19181c7b6875c4e9856b18377",
     "texts": {
       "en": "Provide your full physical location. Precision matters, even for Saiyans.",
-      "pt-BR": "Declare seu endereço físico. Não esconda nada.",
-      "es-ES": "Dime tu dirección física, que necesito saber dónde enviarte la derrota si fallas.",
-      "fr-FR": "Indique ton adresse physique, même un prince doit avoir un repère.",
-      "en-US": "Where do you reside? Even a prince must know his territory."
+      "pt-BR": "Digite seu endereço completo. Não me faça perder tempo com detalhes inúteis.",
+      "es-ES": "Proporciona tu dirección física. No como si me importara tu guarida.",
+      "fr-FR": "Indique ton adresse physique. Même un prince doit être localisable.",
+      "en-US": "Enter your full physical address. Don't test my patience with incomplete info."
     }
   },
   "vegeta::user_info.password": {
     "hash": "4729fcca7a54a4ba4243f8bfd595a5eb",
     "texts": {
       "en": "Set a password strong enough to block weaklings. Show some pride.",
-      "pt-BR": "Defina uma senha forte. Quebre limites, não códigos.",
-      "es-ES": "Establece una contraseña fuerte, como un ataque Final Flash, nada de debilidades.",
-      "fr-FR": "Crée un mot de passe puissant, digne d'un Saiyan.",
-      "en-US": "Set your password. It better be strong, like a Saiyan’s resolve."
+      "pt-BR": "Crie uma senha forte, digna de um príncipe Saiyan.",
+      "es-ES": "Introduce la contraseña que protegerá tu débil identidad.",
+      "fr-FR": "Choisis un mot de passe puissant, pas une faiblesse.",
+      "en-US": "Create a strong password worthy of a Saiyan warrior. No weaklings allowed."
     }
   },
   "vegeta::user_info.confirmPassword": {
     "hash": "af7d34bbf88a57853150806f8a4f11da",
     "texts": {
       "en": "Repeat your password. I’m not here to babysit.",
-      "es-ES": "Confirma esa contraseña, no me hagas perder tiempo corrigiendo errores.",
-      "fr-FR": "Confirme ce mot de passe, je ne tolère aucune faiblesse.",
-      "pt-BR": "Confirme sua senha. Nada de erros amadores.",
-      "en-US": "Confirm that password. No room for weakness or mistakes."
+      "es-ES": "Repite la contraseña para que no parezcas un inútil olvidadizo.",
+      "fr-FR": "Confirme ton mot de passe, pas question d'erreur ici.",
+      "pt-BR": "Confirme a senha. Não quero erros amadores aqui.",
+      "en-US": "Confirm your password. I expect consistency, not mistakes."
     }
   },
   "vegeta::user_info.cancelButton": {
@@ -186,7 +186,7 @@
       "pt-BR": "Enviar",
       "es-ES": "Enviar",
       "fr-FR": "Soumettre",
-      "en-US": "Engage"
+      "en-US": "Submit Info"
     }
   },
   "vegeta::dashboard.welcomeMessage": {
@@ -198,24 +198,24 @@
         ">1": "{count} new messages. Handle them fast."
       },
       "pt-BR": {
-        "=0": "Nenhuma mensagem nova. Sem desculpas.",
-        "=1": "Tem 1 mensagem. Não me faça repetir.",
-        ">1": "Tem {count} mensagens. Prepare-se para lutar."
+        "=0": "Nenhuma mensagem nova. Mostre força!",
+        "=1": "1 mensagem nova. Prepare-se para agir!",
+        ">1": "{count} mensagens novas. Não perca tempo, lute!"
       },
       "es-ES": {
-        "=0": "No tienes mensajes nuevos. ¿Esperabas algo mejor?",
-        "=1": "Tienes 1 mensaje nuevo. No te duermas.",
-        ">1": "Tienes {count} mensajes. ¿Puedes seguir el ritmo?"
+        "=0": "No hay mensajes nuevos, demuéstrame que vales.",
+        "=1": "Tienes 1 mensaje nuevo, no te duermas.",
+        ">1": "Tienes {count} mensajes nuevos, ¿puedes con ellos?"
       },
       "fr-FR": {
-        "=0": "Aucun message nouveau. Montre-toi digne.",
-        "=1": "1 message à lire. Ne perds pas de temps.",
-        ">1": "{count} messages attendent. Ne traîne pas."
+        "=0": "Aucun message. Montre ta force autrement.",
+        "=1": "1 message reçu. Ne perds pas de temps.",
+        ">1": "{count} messages reçus. Sois prêt à combattre."
       },
       "en-US": {
-        "=0": "No new messages. Train harder.",
-        "=1": "1 new message. Don't waste time.",
-        ">1": "{count} new messages. Focus up."
+        "=0": "No messages. Prove you're worthy.",
+        "=1": "1 new message. Stay sharp.",
+        ">1": "{count} messages await. Don't lag behind."
       }
     }
   },
@@ -224,18 +224,18 @@
     "texts": {
       "en": "Access Technical Docs",
       "pt-BR": "Documentação Técnica",
-      "es-ES": "Documentación Técnica",
-      "fr-FR": "Docs techniques Saiyan",
-      "en-US": "Access Tech Docs"
+      "es-ES": "Documentación técnica",
+      "fr-FR": "Docs techniques",
+      "en-US": "Access the Docs Now"
     }
   },
   "i18n::user_info.confirmPassword": {
     "hash": "af7d34bbf88a57853150806f8a4f11da",
     "texts": {
-      "pt-BR": "Arrr, confirme a senha pra evitar confusão entre os papagaios!",
-      "es-ES": "¡Arr, confirma esa contraseña para que no te pase como a un marinero sin brújula!",
-      "fr-FR": "Arrr, peux-tu confirmer ton mot de passe, moussaillon, pour que j'sois sûr que t'es pas un imposteur pirate ?",
-      "en-US": "Avast! Type yer secret code again to make sure ye ain't a landlubber tyin' knots in the wrong place."
+      "pt-BR": "Repite a senha, pra garantir que não virou confusão no convés!",
+      "es-ES": "¿Puedes repetir la contraseña para no hundir el barco?",
+      "fr-FR": "Reprends le mot secret, que je m'assure que tu n'as pas bu trop de rhum.",
+      "en-US": "Type that secret code again, just to be sure ye ain't pullin' a fast one."
     }
   }
 }

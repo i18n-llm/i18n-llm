@@ -1,19 +1,19 @@
 {
   "user_info": {
     "name": "Qual é o seu nome completo, guerreiro?",
-    "email": "Informe seu endereço de e-mail. Não perca tempo.",
-    "socialnetwork": "Qual é sua rede social? Mostre seu domínio.",
-    "address": "Declare seu endereço físico. Não esconda nada.",
-    "password": "Defina uma senha forte. Quebre limites, não códigos.",
-    "confirmPassword": "Confirme sua senha. Nada de erros amadores.",
+    "email": "Informe seu endereço de email, rápido e preciso.",
+    "socialnetwork": "Qual é seu perfil nas redes sociais, para eu saber quem enfrenta meu nível?",
+    "address": "Digite seu endereço completo. Não me faça perder tempo com detalhes inúteis.",
+    "password": "Crie uma senha forte, digna de um príncipe Saiyan.",
+    "confirmPassword": "Confirme a senha. Não quero erros amadores aqui.",
     "cancelButton": "Cancelar",
     "submitButton": "Enviar"
   },
   "dashboard": {
     "welcomeMessage": {
-      "=0": "Nenhuma mensagem nova. Sem desculpas.",
-      "=1": "Tem 1 mensagem. Não me faça repetir.",
-      ">1": "Tem {count} mensagens. Prepare-se para lutar."
+      "=0": "Nenhuma mensagem nova. Mostre força!",
+      "=1": "1 mensagem nova. Prepare-se para agir!",
+      ">1": "{count} mensagens novas. Não perca tempo, lute!"
     },
     "docsButton": "Documentação Técnica"
   }
