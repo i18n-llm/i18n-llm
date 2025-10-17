@@ -1,6 +1,7 @@
-# ============================================
-# i18n-llm Monorepo .gitignore
-# ============================================
+# Build outputs (Git ignora, NPM inclui via .npmignore)
+**/dist/
+**/build/
+**/*.tsbuildinfo
 
 # i18n-llm generated files (em qualquer subprojeto)
 **/locales/
@@ -61,3 +62,6 @@
 .turbo/
 .rush/
 
+# NPM
+*.tgz
+.npm/

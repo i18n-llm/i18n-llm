@@ -1,0 +1,60 @@
+# Source files (só dist/ vai)
+src/
+*.ts
+!*.d.ts
+
+# Config files
+tsconfig.json
+tsconfig.*.json
+vitest.config.ts
+.eslintrc*
+.prettierrc*
+
+# Tests
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+**/__tests__/
+**/__mocks__/
+coverage/
+
+# Documentation files
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temp files
+*.log
+.cache/
+.temp/
+tmp/
+
+# Build artifacts desnecessários
+*.tsbuildinfo
+.turbo/
+
+# i18n test files
+locales/
+.i18n-llm-state.json
+*.i18n.json
+test-*.json
+test-*.js
+
+# Node
+node_modules/
