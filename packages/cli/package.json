@@ -1,35 +1,58 @@
 {
   "name": "i18n-llm",
-  "version": "0.1.0",
-  "description": "A CLI tool to manage i18n using LLMs",
+  "version": "1.0.0",
+  "description": "AI-powered i18n translation tool using LLMs (OpenAI, Gemini)",
+  "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
-    "i18n-llm": "dist/index.js"
+    "i18n-llm": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
+    "build:watch": "tsc --watch",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
     "i18n",
+    "internationalization",
+    "translation",
     "llm",
-    "cli"
+    "openai",
+    "gemini",
+    "ai",
+    "automation",
+    "localization",
+    "l10n"
   ],
   "author": "Daniel Belintani",
   "license": "MIT",
-  "dependencies": {
-    "commander": "^12.1.0",
-    "cosmiconfig": "^9.0.0",
-    "glob": "^10.4.2",
-    "openai": "^4.52.2",
-    "zod": "^3.23.8"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/i18n-llm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/i18n-llm/issues"
+  },
+  "homepage": "https://github.com/yourusername/i18n-llm#readme",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "devDependencies": {
-    "@types/glob": "^8.1.0",
-    "@types/node": "^20.14.9",
-    "typescript": "^5.5.3"
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "openai": "^4.0.0"
   }
 }

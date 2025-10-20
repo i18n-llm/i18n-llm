@@ -1,66 +1,132 @@
-<div align="center">
-  <a href="../../README.md">English</a> • 
-  <a href="README.md">Português (Brasil)</a>
-</div>
-<hr>
+# i18n-llm: AI-Powered Internationalization
 
-# i18n-llm
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg )](https://opensource.org/licenses/MIT )
-[![npm version](https://badge.fury.io/js/i18n-llm.svg )](https://badge.fury.io/js/i18n-llm )
+`i18n-llm` is a powerful open-source tool that leverages Large Language Models (LLMs) to automate the translation of application texts. It integrates seamlessly into your development workflow, providing a CLI and GitHub Action to manage and generate translations based on context, constraints, and your desired structure.
 
-`i18n-llm` é um ecossistema open source que automatiza a internacionalização (i18n) em seus projetos, utilizando o poder dos LLMs para gerar traduções de alta qualidade e cientes do contexto, diretamente no seu pipeline de CI/CD.
+This tool is designed for developers who want to streamline the i18n process, reduce manual translation efforts, and ensure high-quality, context-aware translations.
 
-Nossa missão é ajudar desenvolvedores a **levar a experiência da língua materna para usuários de todo o mundo**, sem esforço. Diga adeus à gestão manual de arquivos de tradução e olá para um fluxo de trabalho de i18n mais inteligente e rápido.
+## Features
 
-## ✨ Visão Geral
+- **Multi-Provider Support:** Choose from a variety of LLM providers, including:
+  - **OpenAI:** `gpt-4.1-mini`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`
+  - **Gemini:** `gemini-2.5-flash`, `gemini-1.5-pro`
+  - (Coming soon: Anthropic, Ollama)
+- **CI/CD Integration:** Automate your translation workflow with the included CLI and upcoming GitHub Action.
+- **State Management:** `i18n-llm` tracks the state of your translations to avoid redundant API calls, saving you time and money.
+- **Context-Aware Translations:** Provide context and constraints in your schema to generate more accurate and relevant translations.
+- **Pluralization Support:** Automatically handles pluralization rules for different languages.
+- **Flexible Configuration:** Customize the tool to fit your project's needs with a simple and powerful configuration file.
+- **Monorepo Support:** Designed to work seamlessly in monorepo environments.
 
-O núcleo do `i18n-llm` é uma **CLI** que:
-1.  Lê um **arquivo de schema (`i18n.schema.json`)** onde você define os textos da sua aplicação na língua-fonte, com contexto e restrições.
-2.  Detecta automaticamente textos novos ou alterados.
-3.  Chama um provedor de LLM (como OpenAI) para traduzir esses textos para as línguas de destino.
-4.  Gera os arquivos de tradução (`.json`) prontos para serem usados na sua aplicação.
+## Getting Started
 
-Todo esse processo pode ser automatizado com nossa **GitHub Action**, rodando a cada Pull Request.
+### Installation
 
-## 🚀 Guia de Início
-
-> Para um guia completo e detalhado, acesse nossa documentação:
-> - [**Guia de Início (Português)**](./01-getting-started.md)
-> - [**Getting Started (English)**](../../docs/01-getting-started.md)
-
-### 1. Instalação
-
-Instale a CLI no seu projeto como uma dependência de desenvolvimento:
+Install `i18n-llm` as a development dependency in your project:
 
 ```bash
-npm install --save-dev i18n-llm
+npm install -D i18n-llm
 ```
 
-### 2. Inicialização
+### Configuration
 
-Execute o comando `init` para criar os arquivos de configuração iniciais:
+Create an `i18n-llm.config.js` file in the root of your project. This file defines your translation schema, output directory, and provider configuration.
 
-```bash
-npx i18n-llm init
+Here is a basic example:
+
+```javascript
+// i18n-llm.config.js
+
+/** @type {import('i18n-llm').I18nLLMConfig} */
+module.exports = {
+  schemaFiles: ["./src/i18n/en.schema.json"],
+  outputDir: "./src/i18n/locales",
+  sourceLanguage: "en",
+  providerConfig: {
+    provider: "openai", // or 'gemini'
+    model: "gpt-4.1-mini",
+  },
+};
 ```
 
-### 3. Gere as Traduções
+## Usage
 
-Após definir seus textos no `i18n.schema.json`, execute o comando `generate`:
+To generate your translation files, run the `generate` command:
 
 ```bash
 npx i18n-llm generate
 ```
 
-A CLI criará os arquivos de tradução no diretório de saída especificado.
+This command will:
 
-## 🤝 Contribuindo
+1.  Load and validate your configuration.
+2.  Parse your i18n schema.
+3.  Load the translation state.
+4.  Generate translations for all target languages.
+5.  Save the generated translations to the output directory.
 
-O `i18n-llm` é construído pela comunidade, para a comunidade. Acolhemos contribuições de todos os tipos, desde código até traduções da documentação.
+### Options
 
-Se você quer ajudar a traduzir a documentação para um novo idioma, por favor, leia nosso [Guia de Tradução](./TRANSLATING.md).
+- `--force`: Regenerate all translations, ignoring the current state.
+- `--debug`: Enable debug logging for troubleshooting.
 
-## 📄 Licença
+## Configuration
 
-Este projeto é licenciado sob a **Licença MIT**. Veja o arquivo `LICENSE` para mais detalhes.
+The `i18n-llm.config.js` file accepts the following options:
+
+| Option           | Type       | Description                                                                                             | Default                |
+| ---------------- | ---------- | ------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `schemaFiles`    | `string[]` | An array of paths to your i18n schema files.                                                            | `[]`                   |
+| `outputDir`      | `string`   | The directory where the generated translation files will be saved.                                      | `"./locales"`          |
+| `sourceLanguage` | `string`   | The source language of your application texts.                                                          | `"en"`                 |
+| `statePath`      | `string`   | The path to the translation state file.                                                                 | `".i18n-llm-state.json"` |
+| `providerConfig` | `object`   | The configuration for your chosen LLM provider. See [Provider Configuration](#provider-configuration). | `{}`                   |
+| `persona`        | `object`   | (Optional) A persona to guide the LLM in generating translations with a specific tone or style.       | `undefined`            |
+| `glossary`       | `object`   | (Optional) A glossary of terms to ensure consistent translations for specific words or phrases.       | `undefined`            |
+
+## Provider Configuration
+
+`i18n-llm` supports multiple LLM providers. You can configure your provider in the `providerConfig` section of your `i18n-llm.config.js` file.
+
+### OpenAI
+
+To use OpenAI, set the `provider` to `"openai"` and provide your API key and desired model.
+
+```javascript
+// i18n-llm.config.js
+
+module.exports = {
+  // ...
+  providerConfig: {
+    provider: "openai",
+    model: "gpt-4.1-mini",
+    apiKey: process.env.OPENAI_API_KEY, // Recommended: use environment variables
+  },
+};
+```
+
+### Gemini
+
+To use Gemini, set the `provider` to `"gemini"` and provide your API key and desired model.
+
+```javascript
+// i18n-llm.config.js
+
+module.exports = {
+  // ...
+  providerConfig: {
+    provider: "gemini",
+    model: "gemini-2.5-flash",
+    apiKey: process.env.GEMINI_API_KEY, // Recommended: use environment variables
+  },
+};
+```
+
+## Contributing
+
+Contributions are welcome! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to this project.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

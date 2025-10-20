@@ -1,10 +1,13 @@
 import { Command } from 'commander';
-import { loadConfig, I18nLLMConfig } from '../core/config-loader';
-import { parseSchema, I18nSchema, Entity, KeySchema } from '../core/schema-parser';
-import { loadState, saveState, TranslationState } from '../core/state-manager';
-import { OpenAIProvider } from '../core/llm/providers/openai';
-import { LLMProvider, PluralizedTranslation, TranslationParams } from '../core/llm/llm-provider';
-import { BatchTranslationItem, BatchMetadata } from '../core/llm/llm-provider';
+import { loadConfig, I18nLLMConfig } from '../core/config-loader.js';
+import { parseSchema, I18nSchema, Entity, KeySchema } from '../core/schema-parser.js';
+import { loadState, saveState, TranslationState } from '../core/state-manager.js';
+import { LLMProvider, PluralizedTranslation, TranslationParams } from '../core/llm/llm-provider.js';
+import { BatchTranslationItem, BatchMetadata } from '../core/llm/llm-provider.js';
+import { createProviderFromConfig } from '../core/llm/provider-factory.js';
+// Import providers to trigger auto-registration
+import '../core/llm/providers/openai.js';
+import '../core/llm/providers/gemini.js';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -76,11 +79,15 @@ export const generateCommand = new Command('generate')
         console.log('🐛 Debug mode enabled');
       }
 
-      const config: I18nLLMConfig = loadConfig();
-      console.log('✔️ Config loaded and validated.');
+      const config: I18nLLMConfig = await loadConfig();
+      console.log('✓ Config loaded and validated.');
 
       const state: TranslationState = loadState(config.statePath);
-      const provider: LLMProvider = new OpenAIProvider(process.env.OPENAI_API_KEY!, config.providerConfig.model);
+      
+      // Create provider using Factory Pattern
+      // Automatically detects provider type from config and uses appropriate API key from environment
+      const provider: LLMProvider = createProviderFromConfig(config.providerConfig);
+      console.log(`✔️ Using ${config.providerConfig.provider || 'openai'} provider with model ${config.providerConfig.model}`);
 
       const allSchemaData: { 
         schema: I18nSchema; 

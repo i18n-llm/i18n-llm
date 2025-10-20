@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { PluralizedTranslation } from './llm/llm-provider';
+import { PluralizedTranslation } from './llm/llm-provider.js';
 
 const STATE_FILE_ENCODING = 'utf-8';
 const JSON_INDENT_SPACES = 2;

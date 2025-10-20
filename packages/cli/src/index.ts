@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { initCommand } from './commands/init';
-import { generateCommand } from './commands/generate';
-import { reviewCommand } from './commands/review';
-import { usageReportCommand } from './commands/usage-report';
+import { initCommand } from './commands/init.js';
+import { generateCommand } from './commands/generate.js';
+import { usageReportCommand } from './commands/usage-report.js';
 
 const program = new Command();
 
@@ -16,7 +15,6 @@ program
 
 program.addCommand(initCommand);
 program.addCommand(generateCommand);
-program.addCommand(reviewCommand);
 program.addCommand(usageReportCommand);
 
 program.parse(process.argv);

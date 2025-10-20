@@ -9,7 +9,7 @@ import {
   SchemaValidationError,
   SchemaNotFoundError,
   I18nSchema,
-} from './schema-parser';
+} from './schema-parser.js';
 
 const TEST_SCHEMA_PATH = '.test-schema.json';
 const TEST_SCHEMA_RESOLVED = path.resolve(process.cwd(), TEST_SCHEMA_PATH);

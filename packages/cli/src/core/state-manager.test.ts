@@ -8,7 +8,7 @@ import {
   cleanupState,
   TranslationState,
   StateManagerOptions,
-} from './state-manager';
+} from './state-manager.js';
 
 const TEST_STATE_PATH = '.test-state.json';
 const TEST_STATE_RESOLVED = path.resolve(process.cwd(), TEST_STATE_PATH);
