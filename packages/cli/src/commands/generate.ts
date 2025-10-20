@@ -80,7 +80,7 @@ export const generateCommand = new Command('generate')
       }
 
       const config: I18nLLMConfig = await loadConfig();
-      console.log('✓ Config loaded and validated.');
+      console.log('✔️ Config loaded and validated.');
 
       const state: TranslationState = loadState(config.statePath);
       
@@ -453,4 +453,3 @@ export const generateCommand = new Command('generate')
       process.exit(1);
     }
   });
-

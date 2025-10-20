@@ -4,19 +4,13 @@ import * as path from 'path';
 import {
   loadConfig,
   configExists,
-  getConfigInfo,
+  getDefaultConfig,
   validateConfig,
   ConfigNotFoundError,
   ConfigValidationError,
   ConfigLoadError,
   I18nLLMConfig,
 } from './config-loader.js';
-
-// Helper to ensure file is written and flushed
-async function writeConfigAndWait(path: string, content: string) {
-  fs.writeFileSync(path, content);
-  await new Promise(resolve => setTimeout(resolve, 10));
-}
 
 const TEST_CONFIG_PATH = 'test-config.cjs';
 const TEST_CONFIG_RESOLVED = path.resolve(process.cwd(), TEST_CONFIG_PATH);
@@ -26,16 +20,19 @@ describe('config-loader', () => {
     if (fs.existsSync(TEST_CONFIG_RESOLVED)) {
       fs.unlinkSync(TEST_CONFIG_RESOLVED);
     }
+    // Clear require cache
+    delete require.cache[TEST_CONFIG_RESOLVED];
   });
 
   afterEach(() => {
     if (fs.existsSync(TEST_CONFIG_RESOLVED)) {
       fs.unlinkSync(TEST_CONFIG_RESOLVED);
     }
+    delete require.cache[TEST_CONFIG_RESOLVED];
   });
 
   describe('loadConfig', () => {
-    it('should load valid config file', async () => {
+    it('should load valid config file', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -44,25 +41,20 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      const config = await loadConfig(TEST_CONFIG_PATH);
+      const config = loadConfig(TEST_CONFIG_PATH);
 
       expect(config.schemaFiles).toEqual(['./schema.json']);
       expect(config.outputDir).toBe('./locales');
       expect(config.sourceLanguage).toBe('en-US');
     });
 
-    it('should throw ConfigNotFoundError when file does not exist', async () => {
-      try {
-        await loadConfig(TEST_CONFIG_PATH);
-        expect.fail('Should have thrown ConfigNotFoundError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ConfigNotFoundError);
-      }
+    it('should throw ConfigNotFoundError when file does not exist', () => {
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(ConfigNotFoundError);
     });
 
-    it('should support schemaPaths for backward compatibility', async () => {
+    it('should support schemaPaths for backward compatibility', () => {
       const mockConfig = `
         module.exports = {
           schemaPaths: ['./schema.json'],
@@ -71,14 +63,14 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      const config = await loadConfig(TEST_CONFIG_PATH);
+      const config = loadConfig(TEST_CONFIG_PATH);
 
       expect(config.schemaFiles).toEqual(['./schema.json']);
     });
 
-    it('should set default values', async () => {
+    it('should set default values', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -87,9 +79,9 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      const config = await loadConfig(TEST_CONFIG_PATH);
+      const config = loadConfig(TEST_CONFIG_PATH);
 
       expect(config.statePath).toBe('.i18n-llm-state.json');
       expect(config.providerConfig).toEqual({
@@ -98,7 +90,7 @@ describe('config-loader', () => {
       });
     });
 
-    it('should override defaults when provided', async () => {
+    it('should override defaults when provided', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -112,16 +104,16 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      const config = await loadConfig(TEST_CONFIG_PATH);
+      const config = loadConfig(TEST_CONFIG_PATH);
 
       expect(config.statePath).toBe('./custom-state.json');
       expect(config.providerConfig.provider).toBe('anthropic');
       expect(config.providerConfig.model).toBe('claude-3');
     });
 
-    it('should throw ConfigValidationError when schemaFiles is missing', async () => {
+    it('should throw ConfigValidationError when schemaFiles is missing', () => {
       const mockConfig = `
         module.exports = {
           outputDir: './locales',
@@ -129,18 +121,13 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      try {
-        await loadConfig(TEST_CONFIG_PATH);
-        expect.fail('Should have thrown ConfigValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ConfigValidationError);
-        expect((error as Error).message).toMatch(/schemaFiles.*schemaPaths/);
-      }
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(ConfigValidationError);
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(/schemaFiles.*schemaPaths/);
     });
 
-    it('should throw ConfigValidationError when schemaFiles is not an array', async () => {
+    it('should throw ConfigValidationError when schemaFiles is not an array', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: './schema.json',
@@ -149,18 +136,13 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      try {
-        await loadConfig(TEST_CONFIG_PATH);
-        expect.fail('Should have thrown ConfigValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ConfigValidationError);
-        expect((error as Error).message).toMatch(/array/);
-      }
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(ConfigValidationError);
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(/array/);
     });
 
-    it('should throw ConfigValidationError when schemaFiles is empty', async () => {
+    it('should throw ConfigValidationError when schemaFiles is empty', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: [],
@@ -169,19 +151,18 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
       try {
-        await loadConfig(TEST_CONFIG_PATH);
+        loadConfig(TEST_CONFIG_PATH);
         expect.fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(ConfigValidationError);
-        // FIX: Match the actual error message
         expect((error as Error).message).toMatch(/at least one schema file/);
       }
     });
 
-    it('should throw ConfigValidationError when outputDir is missing', async () => {
+    it('should throw ConfigValidationError when outputDir is missing', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -189,18 +170,13 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      try {
-        await loadConfig(TEST_CONFIG_PATH);
-        expect.fail('Should have thrown ConfigValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ConfigValidationError);
-        expect((error as Error).message).toMatch(/outputDir/);
-      }
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(ConfigValidationError);
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(/outputDir/);
     });
 
-    it('should throw ConfigValidationError when sourceLanguage is missing', async () => {
+    it('should throw ConfigValidationError when sourceLanguage is missing', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -208,18 +184,13 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      try {
-        await loadConfig(TEST_CONFIG_PATH);
-        expect.fail('Should have thrown ConfigValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ConfigValidationError);
-        expect((error as Error).message).toMatch(/sourceLanguage/);
-      }
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(ConfigValidationError);
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(/sourceLanguage/);
     });
 
-    it('should accept optional persona', async () => {
+    it('should accept optional persona', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -232,9 +203,9 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      const config = await loadConfig(TEST_CONFIG_PATH);
+      const config = loadConfig(TEST_CONFIG_PATH);
 
       expect(config.persona).toEqual({
         role: 'Pirate Captain',
@@ -242,7 +213,7 @@ describe('config-loader', () => {
       });
     });
 
-    it('should accept optional glossary', async () => {
+    it('should accept optional glossary', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -255,9 +226,9 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      const config = await loadConfig(TEST_CONFIG_PATH);
+      const config = loadConfig(TEST_CONFIG_PATH);
 
       expect(config.glossary).toEqual({
         API: 'API',
@@ -265,7 +236,7 @@ describe('config-loader', () => {
       });
     });
 
-    it('should throw ConfigValidationError when persona is an array', async () => {
+    it('should throw ConfigValidationError when persona is an array', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -275,33 +246,29 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      try {
-        await loadConfig(TEST_CONFIG_PATH);
-        throw new Error('Should have thrown ConfigValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ConfigValidationError);
-        expect((error as Error).message).toMatch(/persona.*object/);
-      }
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(ConfigValidationError);
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(/persona.*object/);
     });
 
-    it('should throw ConfigValidationError when config is an array', async () => {
+    it('should throw ConfigValidationError when config is an array', () => {
       const mockConfig = `
         module.exports = [];
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
       try {
-        await loadConfig(TEST_CONFIG_PATH);
+        loadConfig(TEST_CONFIG_PATH);
         expect.fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(ConfigValidationError);
+        expect((error as Error).message).toMatch(/valid object/);
       }
     });
 
-    it('should throw ConfigLoadError for syntax errors in config', async () => {
+    it('should throw ConfigLoadError for syntax errors in config', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json',
@@ -309,19 +276,14 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      try {
-        await loadConfig(TEST_CONFIG_PATH);
-        expect.fail('Should have thrown ConfigLoadError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ConfigLoadError);
-      }
+      expect(() => loadConfig(TEST_CONFIG_PATH)).toThrow(ConfigLoadError);
     });
   });
 
   describe('configExists', () => {
-    it('should return true when config file exists', async () => {
+    it('should return true when config file exists', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -330,7 +292,7 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
       expect(configExists(TEST_CONFIG_PATH)).toBe(true);
     });
@@ -340,8 +302,8 @@ describe('config-loader', () => {
     });
   });
 
-  describe('getConfigInfo', () => {
-    it('should return config information', async () => {
+  describe('getDefaultConfig', () => {
+    it('should return config information', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema1.json', './schema2.json'],
@@ -356,9 +318,9 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      const info = await getConfigInfo(TEST_CONFIG_PATH);
+      const info = getDefaultConfig(TEST_CONFIG_PATH);
 
       expect(info).toEqual({
         schemaCount: 2,
@@ -371,7 +333,7 @@ describe('config-loader', () => {
       });
     });
 
-    it('should indicate when persona and glossary are missing', async () => {
+    it('should indicate when persona and glossary are missing', () => {
       const mockConfig = `
         module.exports = {
           schemaFiles: ['./schema.json'],
@@ -380,38 +342,38 @@ describe('config-loader', () => {
         };
       `;
 
-      await writeConfigAndWait(TEST_CONFIG_RESOLVED, mockConfig);
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
 
-      const info = await getConfigInfo(TEST_CONFIG_PATH);
+      const info = getDefaultConfig(TEST_CONFIG_PATH);
 
       expect(info.hasPersona).toBe(false);
       expect(info.hasGlossary).toBe(false);
     });
 
-    it('should throw ConfigNotFoundError when file does not exist', async () => {
-      try {
-        await getConfigInfo(TEST_CONFIG_PATH);
-        expect.fail('Should have thrown ConfigNotFoundError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ConfigNotFoundError);
-      }
+    it('should throw ConfigNotFoundError when file does not exist', () => {
+      expect(() => getDefaultConfig(TEST_CONFIG_PATH)).toThrow(ConfigNotFoundError);
     });
   });
 
   describe('validateConfig', () => {
-    it('should validate a valid config object', () => {
-      const validConfig = {
+    it('should validate and normalize valid config object', () => {
+      const configObj = {
         schemaFiles: ['./schema.json'],
         outputDir: './locales',
         sourceLanguage: 'en-US',
       };
 
-      expect(() => validateConfig(validConfig)).not.toThrow();
+      const validated = validateConfig(configObj);
+
+      expect(validated.schemaFiles).toEqual(['./schema.json']);
+      expect(validated.outputDir).toBe('./locales');
+      expect(validated.sourceLanguage).toBe('en-US');
+      expect(validated.statePath).toBe('.i18n-llm-state.json');
     });
 
-    it('should throw ConfigValidationError for invalid config', () => {
+    it('should throw ConfigValidationError for invalid config object', () => {
       const invalidConfig = {
-        schemaFiles: './schema.json',  // Not an array - should fail
+        schemaFiles: './schema.json', // Should be array
         outputDir: './locales',
         sourceLanguage: 'en-US',
       };
@@ -426,7 +388,72 @@ describe('config-loader', () => {
         sourceLanguage: 'en-US',
       };
 
-      expect(() => validateConfig(configObj)).not.toThrow();
+      const validated = validateConfig(configObj);
+
+      expect(validated.schemaFiles).toEqual(['./schema.json']);
+    });
+  });
+
+  describe('error handling', () => {
+    it('should include config path in ConfigNotFoundError', () => {
+      try {
+        loadConfig(TEST_CONFIG_PATH);
+        expect.fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ConfigNotFoundError);
+        expect((error as ConfigNotFoundError).configPath).toContain(TEST_CONFIG_PATH);
+      }
+    });
+
+    it('should include config path in ConfigValidationError', () => {
+      const mockConfig = `
+        module.exports = {
+          schemaFiles: ['./schema.json'],
+          // Missing required fields
+        };
+      `;
+
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig);
+
+      try {
+        loadConfig(TEST_CONFIG_PATH);
+        expect.fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ConfigValidationError);
+        expect((error as ConfigValidationError).configPath).toBe(TEST_CONFIG_PATH);
+      }
+    });
+  });
+
+  describe('config reloading', () => {
+    it('should reload config when file changes', () => {
+      // Note: ES module imports are cached differently than CommonJS require()
+      // Dynamic import() caching makes it difficult to test config reloading
+      // In practice, users restart the process when config changes
+      const mockConfig1 = `
+        module.exports = {
+          schemaFiles: ['./schema1.json'],
+          outputDir: './locales',
+          sourceLanguage: 'en-US'
+        };
+      `;
+
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig1);
+      const config1 = loadConfig(TEST_CONFIG_PATH);
+      expect(config1.schemaFiles).toEqual(['./schema1.json']);
+
+      // Modify config
+      const mockConfig2 = `
+        module.exports = {
+          schemaFiles: ['./schema2.json'],
+          outputDir: './locales',
+          sourceLanguage: 'en-US'
+        };
+      `;
+
+      fs.writeFileSync(TEST_CONFIG_RESOLVED, mockConfig2);
+      const config2 = loadConfig(TEST_CONFIG_PATH);
+      expect(config2.schemaFiles).toEqual(['./schema2.json']);
     });
   });
 });

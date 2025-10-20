@@ -1,0 +1,121 @@
+{
+  "targetLanguages": ["pt-BR", "es", "fr", "de"],
+  "entities": {
+    "common": {
+      "context": "Common UI elements used throughout the application",
+      "appName": {
+        "description": "The name of the application",
+        "constraints": {
+          "maxLength": 20
+        }
+      },
+      "welcome": {
+        "description": "Welcome message shown to users when they first open the app",
+        "constraints": {
+          "maxLength": 100
+        }
+      },
+      "loading": {
+        "description": "Loading indicator text",
+        "constraints": {
+          "maxLength": 30
+        }
+      },
+      "error": {
+        "description": "Generic error message",
+        "constraints": {
+          "maxLength": 100
+        }
+      }
+    },
+    "auth": {
+      "context": "Authentication and authorization related texts",
+      "signIn": {
+        "description": "Button text for signing in",
+        "constraints": {
+          "maxLength": 20
+        }
+      },
+      "signOut": {
+        "description": "Button text for signing out",
+        "constraints": {
+          "maxLength": 20
+        }
+      },
+      "email": {
+        "description": "Label for email input field",
+        "constraints": {
+          "maxLength": 30
+        }
+      },
+      "password": {
+        "description": "Label for password input field",
+        "constraints": {
+          "maxLength": 30
+        }
+      },
+      "forgotPassword": {
+        "description": "Link text for password recovery",
+        "constraints": {
+          "maxLength": 40
+        }
+      }
+    },
+    "dashboard": {
+      "context": "Dashboard page texts",
+      "title": {
+        "description": "Dashboard page title",
+        "constraints": {
+          "maxLength": 50
+        }
+      },
+      "stats": {
+        "description": "Statistics section title",
+        "constraints": {
+          "maxLength": 30
+        }
+      },
+      "itemCount": {
+        "description": "Number of items (supports pluralization)",
+        "constraints": {
+          "maxLength": 50,
+          "plural": true
+        }
+      }
+    },
+    "settings": {
+      "context": "Settings page texts",
+      "title": {
+        "description": "Settings page title",
+        "constraints": {
+          "maxLength": 50
+        }
+      },
+      "language": {
+        "description": "Language selection label",
+        "constraints": {
+          "maxLength": 30
+        }
+      },
+      "theme": {
+        "description": "Theme selection label",
+        "constraints": {
+          "maxLength": 30
+        }
+      },
+      "notifications": {
+        "description": "Notifications settings label",
+        "constraints": {
+          "maxLength": 40
+        }
+      },
+      "saveChanges": {
+        "description": "Button text for saving settings",
+        "constraints": {
+          "maxLength": 30
+        }
+      }
+    }
+  }
+}
+
