@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/your-username/i18n-llm/main/schemas/schema-v2.1.json",
   "version": "2.1",
   "sourceLanguage": "en-US",
   "targetLanguages": [
@@ -59,64 +58,64 @@
   },
   "entities": {
     "user_info": {
-        "_context": "A form with user information fields. I like it with some labels well described, and not only a single word. Try to do questions instead of labels when possible.",
-        "name": {
-          "description": "The user's full name.",
-          "constraints": {
-            "maxLength": 255
-          },
-          "category": "form_label"
+      "_context": "A form with user information fields. I like it with some labels well described, and not only a single word. Try to do questions instead of labels when possible.",
+      "name": {
+        "description": "The user's full name.",
+        "constraints": {
+          "maxLength": 255
         },
-        "email": {
-          "description": "The user's email address.",
-          "constraints": {
-            "maxLength": 255
-          },
-          "category": "form_label"
-        },
-        "socialnetwork": {
-          "description": "The user's social network handle, e.g., Twitter or LinkedIn.",
-          "constraints": {
-            "maxLength": 255
-          },
-          "category": "form_label"
-        },
-        "address": {
-          "description": "The user's physical address.",
-          "constraints": {
-            "maxLength": 500
-          },
-          "category": "form_label"
-        },
-        "password": {
-          "description": "The user's password.",
-          "constraints": {
-            "maxLength": 255
-          },
-          "category": "form_label"
-        },
-        "confirmPassword": {
-          "description": "A field to confirm the user's password.",
-          "constraints": {
-            "maxLength": 255
-          },
-          "category": "form_label"
-        },
-        "cancelButton": {
-          "description": "A button to cancel the user information form.",
-          "constraints": {
-            "maxLength": 20
-          },
-          "category": "button_label"
-        },
-        "submitButton": {
-          "description": "A button to submit the user information form.",
-          "constraints": {
-            "maxLength": 20
-          },
-          "category": "button_label"
-        }
+        "category": "form_label"
       },
+      "email": {
+        "description": "The user's email address.",
+        "constraints": {
+          "maxLength": 255
+        },
+        "category": "form_label"
+      },
+      "socialnetwork": {
+        "description": "The user's social network handle, e.g., Twitter or LinkedIn.",
+        "constraints": {
+          "maxLength": 255
+        },
+        "category": "form_label"
+      },
+      "address": {
+        "description": "The user's physical address.",
+        "constraints": {
+          "maxLength": 500
+        },
+        "category": "form_label"
+      },
+      "password": {
+        "description": "The user's password.",
+        "constraints": {
+          "maxLength": 255
+        },
+        "category": "form_label"
+      },
+      "confirmPassword": {
+        "description": "A field to confirm the user's password.",
+        "constraints": {
+          "maxLength": 255
+        },
+        "category": "form_label"
+      },
+      "cancelButton": {
+        "description": "A button to cancel the user information form.",
+        "constraints": {
+          "maxLength": 20
+        },
+        "category": "button_label"
+      },
+      "submitButton": {
+        "description": "A button to submit the user information form.",
+        "constraints": {
+          "maxLength": 20
+        },
+        "category": "button_label"
+      }
+    },
     "dashboard": {
       "_context": "The main screen a user sees after logging in.",
       "welcomeMessage": {
@@ -138,7 +137,6 @@
         },
         "category": "button_label"
       }
-      
     }
   }
 }
