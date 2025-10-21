@@ -1,9 +1,10 @@
 /**
  * i18n.costs Command
- * Analyzes historical cost data from .i18n-llm-history.json
+ * Analyzes historical cost data from .i18n-history.json
  * Provides summaries by total, date, language, and provider
  */
 
+import { loadConfig } from '../core/config-loader.js';
 import {
   getCostByDate,
   getCostByLanguage,
@@ -13,6 +14,7 @@ import {
 } from '../core/history-tracker.js';
 
 interface CostsOptions {
+  config?: string;
   history?: string;
   format?: 'text' | 'json';
 }
@@ -126,10 +128,22 @@ function formatAsJSON(summary: CostsSummary): string {
  */
 export function costsCommand(options: CostsOptions): void {
   try {
-    const historyPath = options.history;
-    const format = options.format || 'text';
+    // Load config to get historyPath if not provided via CLI
+    let historyPath = options.history;
+    if (!historyPath) {
+      try {
+        const configPath = options.config || 'i18n-llm.config.js';
+        const config = loadConfig(configPath);
+        historyPath = config.historyPath;
+      } catch (error) {
+        // Config not found, use default
+      }
+    }
 
-    console.log(`\n🔍 Analyzing cost history from: ${historyPath || '.i18n-llm-history.json'}\n`);
+    const format = options.format || 'text';
+    const displayPath = historyPath || '.i18n-history.json';
+
+    console.log(`\n🔍 Analyzing cost history from: ${displayPath}\n`);
 
     const summary = generateCostsSummary(historyPath);
 
@@ -150,4 +164,3 @@ export function costsCommand(options: CostsOptions): void {
     process.exit(1);
   }
 }
-

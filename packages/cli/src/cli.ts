@@ -7,9 +7,9 @@
 
 import { Command } from 'commander';
 import { generateCommand } from './commands/generate.js';
-import { usageCommand } from './commands/i18n.usage.js';
-import { reportCommand } from './commands/i18n.report.js';
 import { costsCommand } from './commands/i18n.costs.js';
+import { reportCommand } from './commands/i18n.report.js';
+import { usageCommand } from './commands/i18n.usage.js';
 
 const program = new Command();
 
@@ -42,9 +42,9 @@ program
 program
   .command('i18n.costs')
   .description('Analyze historical cost data from generation history')
-  .option('--history <path>', 'Path to history file', '.i18n-history.json')
+  .option('--config <path>', 'Path to config file', 'i18n-llm.config.js')
+  .option('--history <path>', 'Path to history file (overrides config)')
   .option('--format <format>', 'Output format (text|json)', 'text')
   .action(costsCommand);
 
 program.parse(process.argv);
-
