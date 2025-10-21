@@ -108,7 +108,7 @@ function formatAsJSON(stats: UsageStats): string {
 /**
  * Main command handler
  */
-export async function usageCommand(options: UsageOptions): Promise<void> {
+export function usageCommand(options: UsageOptions): void {
   try {
     const configPath = options.config || 'i18n-llm.config.js';
     const format = options.format || 'text';
@@ -116,13 +116,13 @@ export async function usageCommand(options: UsageOptions): Promise<void> {
     console.log(`\n🔍 Analyzing schema files from: ${configPath}\n`);
 
     // Load configuration
-    const config = await loadConfig(configPath);
+    const config = loadConfig(configPath);
 
     // Parse all schema files
     const allStats: UsageStats[] = [];
     
     for (const schemaFile of config.schemaFiles) {
-      const schema = await parseSchema(schemaFile);
+      const schema = parseSchema(schemaFile);
       const stats = calculateUsage(schema);
       allStats.push(stats);
     }

@@ -24,6 +24,7 @@ export interface I18nLLMConfig {
   outputDir: string;
   sourceLanguage: string;
   statePath: string;
+  historyPath?: string;
   persona?: Record<string, unknown>;
   glossary?: Record<string, string>;
   providerConfig: ProviderConfig;
@@ -118,7 +119,14 @@ function loadConfigFile(filePath: string): unknown {
   // Clear require cache to allow config reloading
   delete require.cache[require.resolve(filePath)];
   
-  return require(filePath);
+  const loaded = require(filePath);
+  
+  // Handle ES module default export
+  if (loaded && typeof loaded === 'object' && '__esModule' in loaded && 'default' in loaded) {
+    return loaded.default;
+  }
+  
+  return loaded;
 }
 
 function normalizeConfig(config: Record<string, unknown>): I18nLLMConfig {
@@ -130,6 +138,7 @@ function normalizeConfig(config: Record<string, unknown>): I18nLLMConfig {
     outputDir: config.outputDir as string,
     sourceLanguage: config.sourceLanguage as string,
     statePath: (config.statePath as string) || DEFAULT_STATE_PATH,
+    historyPath: config.historyPath as string | undefined,
     persona: config.persona as Record<string, unknown> | undefined,
     glossary: config.glossary as Record<string, string> | undefined,
     providerConfig: (config.providerConfig as ProviderConfig) || {
@@ -269,3 +278,4 @@ export function validateConfig(config: unknown): I18nLLMConfig {
   validateConfigStructure(config, '<programmatic>');
   return normalizeConfig(config as Record<string, unknown>);
 }
+

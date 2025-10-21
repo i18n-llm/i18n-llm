@@ -4,9 +4,10 @@
  * Prefixed with "i18n." to be excluded from CI/CD workflows
  */
 
-import * as fs from 'fs/promises';
+
 import { loadConfig } from '../core/config-loader.js';
 import { parseSchema } from '../core/schema-parser.js';
+import { PRICING, calculateCost as calcCost } from '../core/pricing.js';
 
 interface ReportOptions {
   config?: string;
@@ -35,22 +36,7 @@ interface ConsumptionReport {
   costEstimates: CostEstimate[];
 }
 
-/**
- * Pricing data for different LLM providers (as of Oct 2025)
- * Prices are per 1M tokens
- */
-const PRICING = {
-  openai: {
-    'gpt-4.1-mini': { input: 0.15, output: 0.60 },
-    'gpt-4.1-nano': { input: 0.10, output: 0.40 },
-    'gpt-4o': { input: 2.50, output: 10.00 },
-    'gpt-4-turbo': { input: 10.00, output: 30.00 },
-  },
-  gemini: {
-    'gemini-2.5-flash': { input: 0.075, output: 0.30 },
-    'gemini-1.5-pro': { input: 1.25, output: 5.00 },
-  },
-};
+
 
 /**
  * Estimates token count from text
@@ -69,15 +55,12 @@ function calculateCost(
   inputTokens: number,
   outputTokens: number
 ): CostEstimate | null {
-  const pricing = (PRICING as any)[provider]?.[model];
+  const pricing = PRICING[provider]?.[model];
+  const cost = calcCost(provider, model, inputTokens, outputTokens);
   
-  if (!pricing) {
+  if (!pricing || !cost) {
     return null;
   }
-
-  const inputCost = (inputTokens / 1_000_000) * pricing.input;
-  const outputCost = (outputTokens / 1_000_000) * pricing.output;
-  const totalCost = inputCost + outputCost;
 
   return {
     provider,
@@ -86,15 +69,15 @@ function calculateCost(
     outputTokens,
     inputCostPer1M: pricing.input,
     outputCostPer1M: pricing.output,
-    totalCost,
+    totalCost: cost.totalCost,
   };
 }
 
 /**
  * Generates consumption report
  */
-async function generateReport(configPath: string): Promise<ConsumptionReport> {
-  const config = await loadConfig(configPath);
+function generateReport(configPath: string): ConsumptionReport {
+  const config = loadConfig(configPath);
   
   let totalKeys = 0;
   let totalSourceWords = 0;
@@ -103,7 +86,7 @@ async function generateReport(configPath: string): Promise<ConsumptionReport> {
 
   // Parse all schema files
   for (const schemaFile of config.schemaFiles) {
-    const schema = await parseSchema(schemaFile);
+    const schema = parseSchema(schemaFile);
     const keys = Object.keys(schema.entities || {});
     totalKeys += keys.length;
 
@@ -265,7 +248,7 @@ function formatAsMarkdown(report: ConsumptionReport): string {
 /**
  * Main command handler
  */
-export async function reportCommand(options: ReportOptions): Promise<void> {
+export function reportCommand(options: ReportOptions): void {
   try {
     const configPath = options.config || 'i18n-llm.config.js';
     const format = options.format || 'text';
@@ -274,7 +257,7 @@ export async function reportCommand(options: ReportOptions): Promise<void> {
     console.log(`\n🔍 Generating consumption report from: ${configPath}\n`);
 
     // Generate report
-    const report = await generateReport(configPath);
+    const report = generateReport(configPath);
 
     // Format output
     let output: string;
@@ -288,7 +271,7 @@ export async function reportCommand(options: ReportOptions): Promise<void> {
 
     // Write to file or console
     if (outputPath) {
-      await fs.writeFile(outputPath, output, 'utf-8');
+      require('fs').writeFileSync(outputPath, output, 'utf-8');
       console.log(`✅ Report saved to: ${outputPath}\n`);
     } else {
       console.log(output);

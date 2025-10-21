@@ -26,10 +26,22 @@ export interface BatchTranslationItem {
 }
 
 /**
+ * Token usage information
+ */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
+/**
  * Result of a batch translation operation
  */
 export interface BatchTranslationResult {
-  [key: string]: string | PluralizedTranslation;
+  translations: {
+    [key: string]: string | PluralizedTranslation;
+  };
+  usage?: TokenUsage;
 }
 
 /**
@@ -85,7 +97,10 @@ export interface LLMProvider {
    * If sourceLanguage === targetLanguage, generates text in that language
    * Otherwise, translates from source to target
    */
-  translate(params: TranslationParams): Promise<string | PluralizedTranslation>;
+  translate(params: TranslationParams): Promise<{
+    text: string | PluralizedTranslation;
+    usage?: TokenUsage;
+  }>;
   
   /**
    * Translates or generates multiple texts in batch
@@ -106,3 +121,4 @@ export interface LLMProvider {
    */
   review?(params: ReviewParams): Promise<ReviewResult>;
 }
+

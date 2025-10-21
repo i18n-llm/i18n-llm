@@ -13,6 +13,7 @@ import {
   BatchTranslationItem,
   BatchMetadata,
   BatchTranslationResult,
+  TokenUsage,
 } from '../llm-provider.js';
 import { OpenAIConfig, registerProvider } from '../provider-factory.js';
 import { getLanguageName } from '../utils/language-utils.js';
@@ -41,7 +42,6 @@ export class OpenAIProvider implements LLMProvider {
   private model: string;
 
   constructor(config: OpenAIConfig) {
-    // Validate apiKey
     const apiKey = config.apiKey || process.env.OPENAI_API_KEY;
     
     if (!apiKey) {
@@ -51,7 +51,7 @@ export class OpenAIProvider implements LLMProvider {
     // Validate model
     const model = config.model || 'gpt-4.1-mini';
     if (!model || typeof model !== 'string' || model.trim() === '') {
-      throw new Error('OpenAI model is required and must be a non-empty string.');
+      throw new Error('OpenAI model must be a non-empty string.');
     }
 
     this.client = new OpenAI({
@@ -66,7 +66,10 @@ export class OpenAIProvider implements LLMProvider {
   /**
    * Translates or generates a single text
    */
-  async translate(params: TranslationParams): Promise<string | PluralizedTranslation> {
+  async translate(params: TranslationParams): Promise<{
+    text: string | PluralizedTranslation;
+    usage?: TokenUsage;
+  }> {
     const {
       sourceText,
       targetLanguage,
@@ -118,6 +121,13 @@ export class OpenAIProvider implements LLMProvider {
       throw new Error('Empty response from OpenAI');
     }
 
+    // Extract usage information
+    const usage: TokenUsage | undefined = response.usage ? {
+      inputTokens: response.usage.prompt_tokens,
+      outputTokens: response.usage.completion_tokens,
+      totalTokens: response.usage.total_tokens,
+    } : undefined;
+
     // Parse response
     if (isPlural) {
       const parsed = parseJSONResponse(content);
@@ -133,7 +143,7 @@ export class OpenAIProvider implements LLMProvider {
         );
       }
       
-      return parsed;
+      return { text: parsed, usage };
     } else {
       const text = content.trim();
       
@@ -145,7 +155,7 @@ export class OpenAIProvider implements LLMProvider {
         );
       }
       
-      return text;
+      return { text, usage };
     }
   }
 
@@ -161,7 +171,7 @@ export class OpenAIProvider implements LLMProvider {
     metadata: BatchMetadata
   ): Promise<BatchTranslationResult> {
     if (items.length === 0) {
-      return {};
+      return { translations: {} };
     }
 
     // Determine operation type
@@ -251,11 +261,22 @@ export class OpenAIProvider implements LLMProvider {
       throw new Error('Empty response from OpenAI');
     }
 
+    // Extract usage information
+    const usage: TokenUsage | undefined = response.usage ? {
+      inputTokens: response.usage.prompt_tokens,
+      outputTokens: response.usage.completion_tokens,
+      totalTokens: response.usage.total_tokens,
+    } : undefined;
+
     // Parse and validate response
     const parsed = parseJSONResponse(content);
     const expectedKeys = items.map(item => item.key);
+    const translations = cleanBatchResult(parsed, expectedKeys, maxLengthMap);
     
-    return cleanBatchResult(parsed, expectedKeys, maxLengthMap);
+    return {
+      translations,
+      usage,
+    };
   }
 
   /**
@@ -343,3 +364,4 @@ export function createOpenAIProvider(config: OpenAIConfig): OpenAIProvider {
 
 // Auto-register provider
 registerProvider('openai', (config) => createOpenAIProvider(config as OpenAIConfig));
+

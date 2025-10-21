@@ -2,9 +2,11 @@ import { Command } from 'commander';
 import { loadConfig, I18nLLMConfig } from '../core/config-loader.js';
 import { parseSchema, I18nSchema, Entity, KeySchema } from '../core/schema-parser.js';
 import { loadState, saveState, TranslationState } from '../core/state-manager.js';
-import { LLMProvider, PluralizedTranslation, TranslationParams } from '../core/llm/llm-provider.js';
+import { LLMProvider, PluralizedTranslation, TranslationParams, TokenUsage, BatchTranslationResult } from '../core/llm/llm-provider.js';
 import { BatchTranslationItem, BatchMetadata } from '../core/llm/llm-provider.js';
 import { createProviderFromConfig } from '../core/llm/provider-factory.js';
+import { calculateCost } from '../core/pricing.js';
+import { addGenerationRecord, GenerationRecord } from '../core/history-tracker.js';
 // Import providers to trigger auto-registration
 import '../core/llm/providers/openai.js';
 import '../core/llm/providers/gemini.js';
@@ -79,7 +81,7 @@ export const generateCommand = new Command('generate')
         console.log('🐛 Debug mode enabled');
       }
 
-      const config: I18nLLMConfig = await loadConfig();
+      const config: I18nLLMConfig = loadConfig();
       console.log('✔️ Config loaded and validated.');
 
       const state: TranslationState = loadState(config.statePath);
@@ -210,6 +212,15 @@ export const generateCommand = new Command('generate')
       // ========================================
       console.log('\n--- Step 3: Generating Texts in All Languages ---');
       
+      // Track tokens and costs per language
+      type LanguageStatsType = {
+        keysGenerated: number;
+        keysUpdated: number;
+        inputTokens: number;
+        outputTokens: number;
+      };
+      const languageStats: { [key: string]: LanguageStatsType } = {};
+      
       // Build generation queue grouped by language
       const generationQueue: Array<{
         stateKey: string;
@@ -314,6 +325,16 @@ export const generateCommand = new Command('generate')
           const contextLabel = contextParts.join('::') === 'no-context' ? 'no-context' : `"${contextParts.join('::').substring(0, 50)}..."`;
           console.log(`  - 🔄 Batch ${batchNum}/${groupedItems.size} (${items.length} items, lang: ${lang}, context: ${contextLabel})...`);
 
+          // Initialize language stats if needed
+          if (!languageStats[lang]) {
+            languageStats[lang] = {
+              keysGenerated: 0,
+              keysUpdated: 0,
+              inputTokens: 0,
+              outputTokens: 0,
+            };
+          }
+
           try {
             const batchItems: BatchTranslationItem[] = items.map(item => ({
               key: item.stateKey,
@@ -332,7 +353,7 @@ export const generateCommand = new Command('generate')
             const glossary = schemaData.schema.glossary || config.glossary;
 
             // Generate directly in target language (not translation)
-            const results = await provider.translateBatch(
+            const batchResult = await provider.translateBatch(
               batchItems,
               items[0].targetLanguage,
               items[0].targetLanguage,  // Same language = generation mode
@@ -341,14 +362,32 @@ export const generateCommand = new Command('generate')
               metadata
             );
 
+            // Track tokens from batch
+            if (batchResult.usage && languageStats[lang]) {
+              const usage: TokenUsage = batchResult.usage;
+              languageStats[lang]!.inputTokens += usage.inputTokens;
+              languageStats[lang]!.outputTokens += usage.outputTokens;
+            }
+
             for (const item of items) {
-              const generated = results[item.stateKey];
+              const generated: string | PluralizedTranslation | undefined = batchResult.translations[item.stateKey];
               if (generated) {
+                const isNewKey = !state[item.stateKey].texts || !state[item.stateKey].texts[item.targetLanguage];
+                
                 if (!state[item.stateKey].texts) {
                   state[item.stateKey].texts = {};
                 }
                 state[item.stateKey].texts[item.targetLanguage] = generated;
                 successCount++;
+                
+                // Track key stats
+                if (languageStats[lang]) {
+                  if (isNewKey) {
+                    languageStats[lang]!.keysGenerated++;
+                  } else {
+                    languageStats[lang]!.keysUpdated++;
+                  }
+                }
                 if (debugMode) {
                   console.log(`     - ✅ Generated '${item.entityName}.${item.keyName}' in ${item.targetLanguage}`);
                 }
@@ -370,7 +409,7 @@ export const generateCommand = new Command('generate')
                 const persona = schemaData.schema.persona || config.persona;
                 const glossary = schemaData.schema.glossary || config.glossary;
 
-                const generated = await provider.translate({
+                const result: { text: string | PluralizedTranslation; usage?: TokenUsage } = await provider.translate({
                   sourceText: item.description,
                   targetLanguage: item.targetLanguage,
                   sourceLanguage: item.targetLanguage,  // Same = generation mode
@@ -383,11 +422,30 @@ export const generateCommand = new Command('generate')
                   constraints: item.constraints,
                 });
 
+                // Track tokens from individual call
+                if (result.usage && languageStats[lang]) {
+                  const usage: TokenUsage = result.usage;
+                  languageStats[lang]!.inputTokens += usage.inputTokens;
+                  languageStats[lang]!.outputTokens += usage.outputTokens;
+                }
+
+                const isNewKey = !state[item.stateKey].texts || !state[item.stateKey].texts[item.targetLanguage];
+                
                 if (!state[item.stateKey].texts) {
                   state[item.stateKey].texts = {};
                 }
-                state[item.stateKey].texts[item.targetLanguage] = generated;
+                state[item.stateKey].texts[item.targetLanguage] = result.text;
                 successCount++;
+                
+                // Track key stats
+                if (languageStats[lang]) {
+                  if (isNewKey) {
+                    languageStats[lang]!.keysGenerated++;
+                  } else {
+                    languageStats[lang]!.keysUpdated++;
+                  }
+                }
+                
                 console.log(`     - ✅ Generated '${item.entityName}.${item.keyName}' in ${item.targetLanguage}`);
               } catch (indivError: any) {
                 console.error(`     - ❌ Failed to generate '${item.entityName}.${item.keyName}' in ${item.targetLanguage}: ${indivError.message}`);
@@ -399,6 +457,46 @@ export const generateCommand = new Command('generate')
         }
 
         console.log(`\n  - ✅ Step 3 complete: ${successCount}/${generationQueue.length} texts generated`);
+        
+        // Save generation history with cost tracking
+        console.log('\n  - 💾 Saving generation history...');
+        const providerName = config.providerConfig.provider || 'openai';
+        const modelName = config.providerConfig.model || 'gpt-4.1-mini';
+        
+        for (const [language, stats] of Object.entries(languageStats)) {
+          if (stats.keysGenerated === 0 && stats.keysUpdated === 0) {
+            continue; // Skip languages with no changes
+          }
+          
+          const totalTokens = stats.inputTokens + stats.outputTokens;
+          const costCalc = calculateCost(providerName, modelName, stats.inputTokens, stats.outputTokens);
+          
+          if (costCalc) {
+            const record: GenerationRecord = {
+              timestamp: new Date().toISOString(),
+              provider: providerName,
+              model: modelName,
+              keysGenerated: stats.keysGenerated,
+              keysUpdated: stats.keysUpdated,
+              tokens: {
+                input: stats.inputTokens,
+                output: stats.outputTokens,
+                total: totalTokens,
+              },
+              cost: {
+                input: costCalc.inputCost,
+                output: costCalc.outputCost,
+                total: costCalc.totalCost,
+                currency: 'USD',
+              },
+            };
+            
+            addGenerationRecord(language, record, config.historyPath);
+            console.log(`     - 📊 ${language}: ${stats.keysGenerated} new, ${stats.keysUpdated} updated, ${totalTokens.toLocaleString()} tokens, $${costCalc.totalCost.toFixed(6)}`);
+          } else {
+            console.warn(`     - ⚠️  Could not calculate cost for ${providerName}/${modelName}`);
+          }
+        }
       }
 
       // ========================================
@@ -453,3 +551,4 @@ export const generateCommand = new Command('generate')
       process.exit(1);
     }
   });
+

@@ -12,6 +12,7 @@ import {
   BatchTranslationItem,
   BatchMetadata,
   BatchTranslationResult,
+  TokenUsage,
 } from '../llm-provider.js';
 import { GeminiConfig, registerProvider } from '../provider-factory.js';
 import { getLanguageName } from '../utils/language-utils.js';
@@ -42,7 +43,6 @@ export class GeminiProvider implements LLMProvider {
   private baseURL: string;
 
   constructor(config: GeminiConfig) {
-    // Validate apiKey
     const apiKey = config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     
     if (!apiKey) {
@@ -52,7 +52,7 @@ export class GeminiProvider implements LLMProvider {
     // Validate model
     const model = config.model || 'gemini-2.5-flash';
     if (!model || typeof model !== 'string' || model.trim() === '') {
-      throw new Error('Gemini model is required and must be a non-empty string.');
+      throw new Error('Gemini model must be a non-empty string.');
     }
 
     this.apiKey = apiKey;
@@ -63,7 +63,7 @@ export class GeminiProvider implements LLMProvider {
   /**
    * Calls Gemini API with retry logic
    */
-  private async callGemini(prompt: string, systemInstruction?: string): Promise<string> {
+  private async callGemini(prompt: string, systemInstruction?: string): Promise<{ text: string; usage?: { inputTokens: number; outputTokens: number; totalTokens: number } }> {
     const url = `${this.baseURL}/models/${this.model}:generateContent?key=${this.apiKey}`;
     
     const requestBody: any = {
@@ -119,13 +119,24 @@ export class GeminiProvider implements LLMProvider {
       throw new Error('Invalid response format from Gemini');
     }
 
-    return content;
+    // Extract usage metadata if available
+    const usageMetadata = data.usageMetadata;
+    const usage = usageMetadata ? {
+      inputTokens: usageMetadata.promptTokenCount || 0,
+      outputTokens: usageMetadata.candidatesTokenCount || 0,
+      totalTokens: usageMetadata.totalTokenCount || 0,
+    } : undefined;
+
+    return { text: content, usage };
   }
 
   /**
    * Translates or generates a single text
    */
-  async translate(params: TranslationParams): Promise<string | PluralizedTranslation> {
+  async translate(params: TranslationParams): Promise<{
+    text: string | PluralizedTranslation;
+    usage?: TokenUsage;
+  }> {
     const {
       sourceText,
       targetLanguage,
@@ -166,7 +177,9 @@ export class GeminiProvider implements LLMProvider {
     }
 
     // Call Gemini API
-    const content = await this.callGemini(userPrompt, systemInstruction);
+    const response = await this.callGemini(userPrompt, systemInstruction);
+    const content = response.text;
+    const usage = response.usage;
 
     // Parse response
     if (isPlural) {
@@ -183,7 +196,7 @@ export class GeminiProvider implements LLMProvider {
         );
       }
       
-      return parsed;
+      return { text: parsed, usage };
     } else {
       const text = content.trim();
       
@@ -195,7 +208,7 @@ export class GeminiProvider implements LLMProvider {
         );
       }
       
-      return text;
+      return { text, usage };
     }
   }
 
@@ -211,7 +224,7 @@ export class GeminiProvider implements LLMProvider {
     metadata: BatchMetadata
   ): Promise<BatchTranslationResult> {
     if (items.length === 0) {
-      return {};
+      return { translations: {} };
     }
 
     // Determine operation type
@@ -286,13 +299,19 @@ export class GeminiProvider implements LLMProvider {
     }
 
     // Call Gemini API
-    const content = await this.callGemini(userPrompt, systemInstruction);
+    const response = await this.callGemini(userPrompt, systemInstruction);
+    const content = response.text;
+    const usage = response.usage;
 
     // Parse and validate response
     const parsed = parseJSONResponse(content);
     const expectedKeys = items.map(item => item.key);
+    const translations = cleanBatchResult(parsed, expectedKeys, maxLengthMap);
     
-    return cleanBatchResult(parsed, expectedKeys, maxLengthMap);
+    return {
+      translations,
+      usage,
+    };
   }
 
   /**
@@ -346,7 +365,9 @@ export class GeminiProvider implements LLMProvider {
     const userPrompt = `Review this translation:\n\nSource: ${sourceText}\n\nTranslation: ${translatedText}`;
 
     // Call Gemini API
-    const content = await this.callGemini(userPrompt, systemInstruction);
+    const response = await this.callGemini(userPrompt, systemInstruction);
+    const content = response.text;
+    const usage = response.usage;
 
     // Parse response
     const parsed = parseJSONResponse(content);

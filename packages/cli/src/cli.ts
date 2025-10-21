@@ -9,6 +9,7 @@ import { Command } from 'commander';
 import { generateCommand } from './commands/generate.js';
 import { usageCommand } from './commands/i18n.usage.js';
 import { reportCommand } from './commands/i18n.report.js';
+import { costsCommand } from './commands/i18n.costs.js';
 
 const program = new Command();
 
@@ -36,6 +37,14 @@ program
   .option('--format <format>', 'Output format (text|json|markdown)', 'text')
   .option('--output <path>', 'Output file path (optional)')
   .action(reportCommand);
+
+// Cost analysis command (prefixed with i18n. to exclude from CI/CD)
+program
+  .command('i18n.costs')
+  .description('Analyze historical cost data from generation history')
+  .option('--history <path>', 'Path to history file', '.i18n-history.json')
+  .option('--format <format>', 'Output format (text|json)', 'text')
+  .action(costsCommand);
 
 program.parse(process.argv);
 
