@@ -7,7 +7,8 @@ const JSON_INDENT_SPACES = 2;
 
 export interface TranslationStateEntry {
   hash: string;
-  texts: Record<string, string | PluralizedTranslation>;
+  textHashes?: Record<string, string>;
+  texts?: Record<string, string | PluralizedTranslation>; // Backward compatibility
 }
 
 export interface TranslationState {
@@ -51,7 +52,11 @@ function validateStateStructure(data: unknown): data is TranslationState {
       return false;
     }
 
-    if (!('texts' in typedEntry) || typeof typedEntry.texts !== 'object' || typedEntry.texts === null || Array.isArray(typedEntry.texts)) {
+    // Accept either textHashes or texts (backward compatibility)
+    const hasTextHashes = 'textHashes' in typedEntry && typeof typedEntry.textHashes === 'object' && typedEntry.textHashes !== null && !Array.isArray(typedEntry.textHashes);
+    const hasTexts = 'texts' in typedEntry && typeof typedEntry.texts === 'object' && typedEntry.texts !== null && !Array.isArray(typedEntry.texts);
+    
+    if (!hasTextHashes && !hasTexts) {
       return false;
     }
   }
@@ -165,7 +170,9 @@ export function getStateStats(state: TranslationState): StateStatistics {
   for (const entry of Object.values(state)) {
     stats.totalKeys++;
 
-    for (const lang in entry.texts) {
+    // Support both textHashes (new) and texts (old) for backward compatibility
+    const translations = entry.textHashes || entry.texts || {};
+    for (const lang in translations) {
       stats.totalTexts++;
       stats.languageCounts[lang] = (stats.languageCounts[lang] || 0) + 1;
     }
@@ -201,3 +208,4 @@ export function cleanupState(state: TranslationState, validKeys: Set<string>): n
 
   return removedCount;
 }
+

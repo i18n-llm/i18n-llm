@@ -7,6 +7,7 @@ import { BatchTranslationItem, BatchMetadata } from '../core/llm/llm-provider.js
 import { createProviderFromConfig } from '../core/llm/provider-factory.js';
 import { calculateCost } from '../core/pricing.js';
 import { addGenerationRecord, GenerationRecord } from '../core/history-tracker.js';
+import { calculateTextHash, calculateStringHash } from '../core/hash-utils.js';
 // Import providers to trigger auto-registration
 import '../core/llm/providers/openai.js';
 import '../core/llm/providers/gemini.js';
@@ -212,6 +213,9 @@ export const generateCommand = new Command('generate')
       // ========================================
       console.log('\n--- Step 3: Generating Texts in All Languages ---');
       
+      // Temporary cache for generated texts (not saved to state)
+      const textCache: Record<string, Record<string, string | PluralizedTranslation>> = {};
+      
       // Track tokens and costs per language
       type LanguageStatsType = {
         keysGenerated: number;
@@ -258,24 +262,24 @@ export const generateCommand = new Command('generate')
             if (!existingState) {
               state[stateKey] = {
                 hash: descHash,
-                texts: {},
+                textHashes: {},
               };
             } else if (existingState.hash !== descHash) {
-              // Hash changed - update and clear old texts
+              // Hash changed - update and clear old text hashes
               existingState.hash = descHash;
-              existingState.texts = {};
+              existingState.textHashes = {};
             }
 
             // Check each language
             for (const targetLang of allLanguages) {
               const keyIsMissing = missingKeys.has(`${stateKey}::${targetLang}`);
-              const textExists = state[stateKey].texts && state[stateKey].texts[targetLang];
+              const textHashExists = state[stateKey].textHashes && state[stateKey].textHashes[targetLang];
               const hashChanged = existingState && existingState.hash !== descHash;
-              const needsGeneration = forceRegenerate || !textExists || hashChanged || keyIsMissing;
+              const needsGeneration = forceRegenerate || !textHashExists || hashChanged || keyIsMissing;
 
               if (needsGeneration) {
                 if (debugMode) {
-                  const reason = forceRegenerate ? 'force' : !textExists ? 'new' : hashChanged ? 'changed' : 'missing';
+                  const reason = forceRegenerate ? 'force' : !textHashExists ? 'new' : hashChanged ? 'changed' : 'missing';
                   console.log(`  - 🔄 Queuing '${entityName}.${keyName}' for ${targetLang} (reason: ${reason})`);
                 }
 
@@ -372,12 +376,21 @@ export const generateCommand = new Command('generate')
             for (const item of items) {
               const generated: string | PluralizedTranslation | undefined = batchResult.translations[item.stateKey];
               if (generated) {
-                const isNewKey = !state[item.stateKey].texts || !state[item.stateKey].texts[item.targetLanguage];
+                const stateEntry = state[item.stateKey]!;
+                const isNewKey = !stateEntry.textHashes || !stateEntry.textHashes[item.targetLanguage];
                 
-                if (!state[item.stateKey].texts) {
-                  state[item.stateKey].texts = {};
+                if (!stateEntry.textHashes) {
+                  stateEntry.textHashes = {};
                 }
-                state[item.stateKey].texts[item.targetLanguage] = generated;
+                const textHash = calculateTextHash(generated);
+                stateEntry.textHashes[item.targetLanguage] = textHash;
+                
+                // Save to temporary cache for writing output files
+                if (!textCache[item.stateKey]) {
+                  textCache[item.stateKey] = {};
+                }
+                textCache[item.stateKey][item.targetLanguage] = generated;
+                
                 successCount++;
                 
                 // Track key stats
@@ -429,12 +442,21 @@ export const generateCommand = new Command('generate')
                   languageStats[lang]!.outputTokens += usage.outputTokens;
                 }
 
-                const isNewKey = !state[item.stateKey].texts || !state[item.stateKey].texts[item.targetLanguage];
+                const stateEntry = state[item.stateKey]!;
+                const isNewKey = !stateEntry.textHashes || !stateEntry.textHashes[item.targetLanguage];
                 
-                if (!state[item.stateKey].texts) {
-                  state[item.stateKey].texts = {};
+                if (!stateEntry.textHashes) {
+                  stateEntry.textHashes = {};
                 }
-                state[item.stateKey].texts[item.targetLanguage] = result.text;
+                const textHash = calculateTextHash(result.text);
+                stateEntry.textHashes[item.targetLanguage] = textHash;
+                
+                // Save to temporary cache for writing output files
+                if (!textCache[item.stateKey]) {
+                  textCache[item.stateKey] = {};
+                }
+                textCache[item.stateKey][item.targetLanguage] = result.text;
+                
                 successCount++;
                 
                 // Track key stats
@@ -510,7 +532,17 @@ export const generateCommand = new Command('generate')
 
         for (const lang of allTargetLangs) {
           const langFilePath = path.join(config.outputDir, `${prefix}.${lang}.json`);
-          const langFileContent = {};
+          
+          // Load existing file to preserve translations that weren't regenerated
+          let langFileContent: any = {};
+          if (fs.existsSync(langFilePath)) {
+            try {
+              const existingContent = fs.readFileSync(langFilePath, 'utf-8');
+              langFileContent = JSON.parse(existingContent);
+            } catch (error) {
+              console.warn(`  - ⚠️  Failed to load existing file ${langFilePath}, starting fresh`);
+            }
+          }
 
           for (const entityName in schema.entities) {
             const entity = schema.entities[entityName];
@@ -521,9 +553,17 @@ export const generateCommand = new Command('generate')
               const stateKey = makeStateKey(prefix, entityName, keyName);
               const stateEntry = state[stateKey];
 
-              if (!stateEntry || !stateEntry.texts) continue;
+              if (!stateEntry || !stateEntry.textHashes) continue;
+              if (!stateEntry.textHashes[lang]) continue;
 
-              const textToSet = stateEntry.texts[lang];
+              // Get text from cache or read from existing output file
+              let textToSet: string | PluralizedTranslation | undefined;
+              if (textCache[stateKey] && textCache[stateKey][lang]) {
+                textToSet = textCache[stateKey][lang];
+              } else {
+                // Text wasn't regenerated, read from existing output file
+                textToSet = getNestedValue(langFileContent, `${entityName}.${keyName}`.split('.'));
+              }
 
               if (textToSet) {
                 setNestedValue(langFileContent, `${entityName}.${keyName}`.split('.'), textToSet);
