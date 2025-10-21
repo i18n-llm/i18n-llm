@@ -1,15 +1,15 @@
 /**
  * i18n.costs Command
- * Analyzes historical cost data from .i18n-history.json
+ * Analyzes historical cost data from .i18n-llm-history.json
  * Provides summaries by total, date, language, and provider
  */
 
 import {
-  loadHistory,
-  getTotalCost,
-  getCostByLanguage,
   getCostByDate,
+  getCostByLanguage,
   getCostByProvider,
+  getTotalCost,
+  loadHistory,
 } from '../core/history-tracker.js';
 
 interface CostsOptions {
@@ -33,7 +33,7 @@ interface CostsSummary {
  */
 function generateCostsSummary(historyPath?: string): CostsSummary {
   const history = loadHistory(historyPath);
-  
+
   let totalGenerations = 0;
   let totalKeys = 0;
   let totalTokens = 0;
@@ -129,7 +129,7 @@ export function costsCommand(options: CostsOptions): void {
     const historyPath = options.history;
     const format = options.format || 'text';
 
-    console.log(`\n🔍 Analyzing cost history from: ${historyPath || '.i18n-history.json'}\n`);
+    console.log(`\n🔍 Analyzing cost history from: ${historyPath || '.i18n-llm-history.json'}\n`);
 
     const summary = generateCostsSummary(historyPath);
 
