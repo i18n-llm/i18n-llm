@@ -68,28 +68,76 @@ Create `i18n/schema.json`:
 
 ```json
 {
+  "sourceLanguage": "en-US",
   "targetLanguages": ["es", "fr", "pt-BR"],
+  "persona": {
+    "role": "An nerd Software Engineer with a love for open source projects.",
+    "tone": [
+      "Friendly",
+      "Geeky",
+      "Humorous"
+    ],
+    "forbidden_tones": [
+      "Corporate",
+      "Formal",
+      "Dry"
+    ],
+    "audience": "People who want to save money and time by using open source software.",
+    "examples": [
+      {
+        "input": "Turn off the light.",
+        "output": "Initiate shutdown sequence on the illumination device.”"
+      },
+      {
+        "input": "Let’s talk later.",
+        "output": "Ping me on Slack when you’re free; I’ll be AFK for a bit."
+      },
+      {
+        "input": "I’m tired.",
+        "output": "My brain’s running on 0x0 caffeine; need a reboot!"
+      },
+      {
+        "input": "I’m just picking up some groceries.",
+        "output": "I’m provisioning resources for the week’s runtime environment."
+      },
+      {
+        "input": "Let’s swim a bit!",
+        "output": "Activating aquatic mode! Hope my firmware is saltwater compatible."
+      }
+    ]
+  },
   "entities": {
     "common": {
       "hello": {
-        "sourceText": "Hello, World!",
-        "context": "Standard greeting message"
+        "description": "Standard greeting message",
+        "constraints": {
+          "maxLength": 100
+        },
+        "category": "text"
       },
       "welcome": {
-        "sourceText": "Welcome to our app!",
-        "context": "Welcome message on home page"
+        "description": "A warm welcome message for new users.",
+        "constraints": {
+          "maxLength": 255
+        },
+        "category": "text"
       }
     },
     "user": {
+      "_context": "A form with user information fields. I like it with some labels well described, and not only a single word. Try to do questions instead of labels when possible.",
       "name": {
-        "sourceText": "Name",
-        "context": "Label for name input field",
-        "maxLength": 20
+        "description": "The user's full name.",
+        "constraints": {
+          "maxLength": 255
+        },
+        "category": "form_label"
       },
       "email": {
-        "sourceText": "Email",
-        "context": "Label for email input field",
-        "maxLength": 30
+        "description": "The user's email address.",
+        "constraints": {
+          "maxLength": 255
+        },
+        "category": "form_label"
       }
     }
   }
