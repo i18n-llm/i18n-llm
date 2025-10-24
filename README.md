@@ -213,9 +213,9 @@ Create `i18n/schema.json`:
   "targetLanguages": ["es", "fr", "pt-BR"],
   "entities": {
     "common": {
+      "_context": "Standard greeting",
       "hello": {
-        "sourceText": "Hello, World!",
-        "context": "Standard greeting"
+        "description": "A short Hello World message!"
       }
     }
   }
@@ -337,13 +337,14 @@ export GEMINI_API_KEY="..."
 {
   "targetLanguages": ["es", "fr", "pt-BR"],
   "entities": {
-    "category": {
-      "key": {
-        "sourceText": "Text to translate",
-        "context": "Context for translator",
-        "maxLength": 50,
+    "people": {
+      "_context": "Context for people",
+      "name": {
+        "description": "Request for first name",
+        "constraints": { "maxLength": 25 },
+        "pluralization": true,
         "params": {
-          "param1": "Description"
+          "count": { "type": "number" }
         }
       }
     }
