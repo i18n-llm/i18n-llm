@@ -545,7 +545,6 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 Explore our comprehensive documentation to get the most out of i18n-llm:
 
-- 📚 **[Quick Start Guide](./QUICK_START.md)** - Get up and running in 5 minutes
 - 📖 **[Schema Guide](./docs/SCHEMA_GUIDE.md)** - Master the schema format with detailed examples
 - 🔧 **[Commands Reference](./docs/COMMANDS.md)** - Complete CLI command documentation
 - 🔄 **[CI/CD Integration](./docs/CICD.md)** - Automate translations with GitHub Actions
