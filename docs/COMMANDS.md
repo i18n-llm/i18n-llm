@@ -19,28 +19,28 @@ i18n-llm [command] --help
 
 ## `generate`
 
-The `generate` command is the main command of `i18n-llm`. It orchestrates the entire translation process, from reading the schema to generating the final translation files.
+The `generate` command is the core of `i18n-llm`. It orchestrates the entire translation process, from reading the schema and persona to generating the final, localized JSON files.
 
 ```bash
 i18n-llm generate [options]
 ```
 
-### Features
+### Workflow
 
-The command performs the following steps:
+The command executes the following steps:
 
-1.  **Loads Configuration:** Reads and validates the `i18n-llm.config.js` file.
+1.  **Load Configuration:** Reads and validates `i18n-llm.config.js` and all schema files.
 2.  **State Cleanup:** Removes keys from the state file (`.i18n-llm-state.json`) that no longer exist in the schema.
-3.  **Change Detection:** Compares the current schema with the saved state to identify new or modified texts. It checks the hash of the source content, description, and other constraints.
-4.  **Translation Generation:** Sends the new or modified texts to the configured LLM provider (OpenAI or Gemini) to generate translations in all target languages.
-5.  **Output File Generation:** Creates or updates the translation JSON files in the output directory, one for each language.
-6.  **Cost Tracking:** Records token usage and associated costs for each generation in the history file (`.i18n-history.json`).
+3.  **Change Detection:** Compares the current schema (including persona, glossary, and descriptions) with the saved state to identify new or modified texts. It uses hashing to efficiently detect any changes.
+4.  **Batch Translation:** Sends all new or modified texts in batches to the configured LLM provider (e.g., OpenAI, Gemini), including the full `persona` and `glossary` context.
+5.  **Generate Output Files:** Creates or updates the JSON translation files in the output directory, one for each target language.
+6.  **Track Costs:** Records token usage and associated costs for the generation in the history file (`.i18n-history.json`).
 
 ### Options
 
 | Option    | Description                                                               |
 | :-------- | :------------------------------------------------------------------------ |
-| `--force` | Forces the regeneration of all keys, ignoring the state cache.            |
+| `--force` | Forces the regeneration of all keys, ignoring the state cache. Useful when changing the `persona`. |
 | `--debug` | Enables detailed debug logging for troubleshooting.                       |
 | `--help`  | Displays help for the command.                                            |
 
@@ -53,31 +53,23 @@ The command performs the following steps:
 i18n-llm generate
 ```
 
-**Force Full Regeneration:**
+**Force a Full Regeneration:**
 
-Useful when you change the global prompt in the configuration file or want to re-translate everything.
+This is recommended after making significant changes to the `persona` to ensure all texts adopt the new style.
 
 ```bash
 # Ignores the cache and translates all keys again
 i18n-llm generate --force
 ```
 
-**Execution with Debugging:**
-
-Use this option to get a detailed log of what `i18n-llm` is doing, including which keys are being generated and why.
-
-```bash
-i18n-llm generate --debug
-```
-
 
 ## Cost and Usage Analysis Commands
 
-`i18n-llm` offers a set of commands to help you monitor and control the costs associated with using LLMs for translation. These commands use the history file (`.i18n-history.json`) to provide detailed analyses.
+`i18n-llm` provides commands to help you monitor and estimate costs associated with LLM usage.
 
 ### `i18n.costs`
 
-Analyzes the cost history of all generations and provides a detailed report, grouped by language, date, and provider/model.
+Analyzes the cost history from all past generations and provides a detailed report, grouped by language, date, and provider/model.
 
 ```bash
 i18n-llm i18n.costs [options]
@@ -87,7 +79,7 @@ i18n-llm i18n.costs [options]
 
 | Option | Description |
 | :--- | :--- |
-| `--history <path>` | Path to the history file (defaults to the one defined in `historyPath` in your config file). |
+| `--history <path>` | Path to the history file (defaults to `historyPath` in your config). |
 | `--format <format>` | Output format: `text` (default) or `json`. |
 | `--help` | Displays help for the command. |
 
@@ -99,7 +91,7 @@ i18n-llm i18n.costs [options]
 i18n-llm i18n.costs
 ```
 
-**JSON Output:**
+**JSON Output for programmatic use:**
 
 ```bash
 i18n-llm i18n.costs --format json
@@ -107,7 +99,7 @@ i18n-llm i18n.costs --format json
 
 ### `i18n.usage`
 
-Calculates the token and word usage of your i18n schema. This is useful for estimating the cost *before* running the `generate` command.
+Calculates the token and word count of your i18n schema. This is useful for estimating costs *before* running the `generate` command.
 
 ```bash
 i18n-llm i18n.usage [options]
@@ -117,11 +109,7 @@ i18n-llm i18n.usage [options]
 
 | Option | Description |
 | :--- | :--- |
-| `--schema <path>` | Path to the schema file (defaults to the one defined in `schemaPath` in your config file). |
+| `--schema <path>` | Path to the schema file (defaults to `schemaFiles` in your config). |
 | `--format <format>` | Output format: `text` (default) or `json`. |
 | `--help` | Displays help for the command. |
-
-### `i18n.report`
-
-(In development) Will generate a consumption report with cost estimates.
 

@@ -1,246 +1,195 @@
-# Internationalization (i18n) Schema Guide
+# i18n-llm Schema Guide (v2)
 
-The schema file (`i18n.schema.json`) is the heart of `i18n-llm`. It defines all the texts of your application in the source language, along with the context and constraints necessary to generate accurate, high-quality translations. A well-structured schema is fundamental to the success of the internationalization process.
+The schema file (e.g., `i18n.schema.json`) is the heart of `i18n-llm`. It defines not only the texts to be translated but also the **personality**, **context**, and **constraints** required to generate high-quality, culturally-aware translations. A well-structured schema is the key to unlocking the full power of LLM-based localization.
 
-This guide covers everything from basic concepts to advanced features of the schema, providing best practices to ensure your translations are efficient, consistent, and easy to manage.
+This guide covers the v2 schema structure, from top-level configuration to the nuances of defining entities and the powerful `persona` object.
 
-## Basic Concepts
+## Top-Level Structure
 
-### Fundamental Structure
-
-The schema is a JSON file consisting of key-value pairs. Each key represents a unique identifier for a specific text in your application, and the value corresponds to the text in the source language.
-
-**Simple Example:**
+The schema is a JSON object with several root-level properties that define the project's overall configuration.
 
 ```json
 {
-  "welcome_message": "Hello, world!",
-  "user_greeting": "Welcome back, {userName}!"
+  "version": "2.1",
+  "sourceLanguage": "en-US",
+  "targetLanguages": [
+    "pt-BR",
+    "es-ES",
+    "fr-FR"
+  ],
+  "persona": { ... },
+  "glossary": { ... },
+  "entities": { ... }
 }
 ```
 
-In this example:
-- `welcome_message` is a key for a static text.
-- `user_greeting` is a key for a text that includes a variable `{userName}`.
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `version` | String | The version of the schema format. Helps `i18n-llm` handle potential future migrations. |
+| `sourceLanguage` | String | The source language of your texts (e.g., `en-US`). |
+| `targetLanguages`| Array | An array of language codes to translate into. |
+| `persona` | Object | **(Key Feature)** Defines the AI's personality, tone, and style. |
+| `glossary` | Object | A key-value map of terms that must not be translated or must follow a specific translation. |
+| `entities` | Object | The main container for all the translatable texts of your application. |
 
-### Nested Keys for Organization
 
-To organize your texts logically, you can nest keys, grouping them by functionality, component, or page.
+## The `persona` Object: Defining Your Brand's Voice
 
-**Example with Nested Keys:**
+The `persona` object is a powerful and unique feature of `i18n-llm`. It allows you to define a consistent personality and tone for the AI, ensuring that translations are not just linguistically correct but also aligned with your brand's voice and cultural context.
+
+This goes beyond simple "formal" or "informal" settings. You can instruct the LLM to be witty, professional, humorous, or even a sarcastic pirate captain.
+
+### Structure of the `persona` Object
 
 ```json
-{
-  "home_page": {
-    "title": "Welcome to our Application",
-    "subtitle": "The best solution for your needs."
+"persona": {
+  "role": "A witty and slightly sarcastic Pirate Captain",
+  "tone": [
+    "Friendly",
+    "Informal",
+    "Humorous",
+    "Uses pirate slang"
+  ],
+  "forbidden_tones": [
+    "Corporate",
+    "Formal",
+    "Dry"
+  ],
+  "audience": "Software developers who enjoy a bit of fun.",
+  "examples": [
+    {
+      "input": "An unexpected error occurred.",
+      "output": "Shiver me timbers! We've hit a squall."
+    },
+    {
+      "input": "Submit",
+      "output": "Hoist the sails"
+    }
+  ]
+}
+```
+
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `role` | String | A high-level description of the AI's character. This is the primary instruction for its personality. |
+| `tone` | Array | A list of desired tones and stylistic attributes. |
+| `forbidden_tones`| Array | A list of tones to avoid, which helps prevent the LLM from defaulting to generic or undesirable styles. |
+| `audience` | String | A description of the target audience, which helps the LLM tailor its language and cultural references. |
+| `examples` | Array | A list of input/output pairs that provide concrete examples of the desired style. This is extremely effective for fine-tuning the LLM's output. |
+
+### How Persona Impacts Translations
+
+The `persona` object is passed to the LLM with every translation request. This ensures that whether the LLM is translating a simple button label or a complex error message, it does so with the specified personality.
+
+- **Contextual Persona:** The persona is applied within the context of each entity. For example, the pirate persona might be more pronounced in UI text but slightly toned down in formal documentation if guided by entity-level `_context`.
+- **Cultural Adaptation:** The LLM uses the persona as a guide but adapts it to the target culture. A "witty" tone in English might be expressed differently in Japanese or French, and the LLM will handle this cultural nuance.
+
+
+
+## The `glossary` Object
+
+The `glossary` ensures that specific terms, like brand names, acronyms, or technical terms, are treated consistently. You can specify whether a term should never be translated or should always be translated in a specific way.
+
+```json
+"glossary": {
+  "CLI": "CLI",
+  "API": "API",
+  "i18n-llm": "i18n-llm"
+}
+```
+
+In this example, `CLI` and `API` will be preserved as-is in all languages, preventing the LLM from translating them incorrectly.
+
+## The `entities` Object: Your Application's Texts
+
+The `entities` object is the core of your schema, containing all the translatable content of your application. It is a collection of logical groups, where each group represents a feature, component, or page.
+
+### Entity Group Structure
+
+Each key within `entities` is a group. You can provide a shared context for all keys within that group using the special `_context` key.
+
+```json
+"entities": {
+  "user_info": {
+    "_context": "A form with user information fields. I like it with some labels well described, and not only a single word. Try to do questions instead of labels when possible.",
+    "name": { ... },
+    "email": { ... }
   },
-  "user_profile": {
-    "title": "User Profile",
-    "edit_button": "Edit Profile"
+  "dashboard": {
+    "_context": "The main screen a user sees after logging in.",
+    "welcomeMessage": { ... }
   }
 }
 ```
 
-This structure makes the schema more readable and easier to maintain as your application grows.
+The `_context` provides powerful, group-level instructions to the LLM, complementing the global `persona`.
 
+### Translatable Key Structure
 
-
-## Variables and Interpolation
-
-Dynamic texts are common in any application. `i18n-llm` supports variable interpolation using the `{}` syntax.
-
-**Example:**
+Each translatable text is an object with several properties that provide detailed instructions to the LLM.
 
 ```json
-{
-  "user_greeting": "Hello, {userName}!",
-  "items_in_cart": "You have {itemCount} items in your cart."
+"name": {
+  "description": "The user's full name.",
+  "constraints": {
+    "maxLength": 255
+  },
+  "category": "form_label"
 }
 ```
 
-When using the translated text in your application, you will replace `{userName}` and `{itemCount}` with the corresponding values. `i18n-llm` ensures that the variables are preserved in the generated translations.
+| Key | Type | Description |
+| :--- | :--- | :--- |
+| `description` | String | **(Highly Recommended)** Explains the purpose and location of the text. This is crucial for contextual accuracy. |
+| `constraints` | Object | An object defining limits for the translation. `maxLength` is a common constraint to prevent UI overflow. |
+| `category` | String | A custom category tag (e.g., `form_label`, `button_label`, `greeting_text`). This helps in organizing and can be used for more advanced processing in the future. |
+| `pluralization`| Boolean | Set to `true` if the key involves pluralization. |
+| `params` | Object | Defines the dynamic parameters used in the text for interpolation. |
 
-### Best Practices for Variables
-
-- **Descriptive Variable Names:** Use clear names like `{userName}` instead of `{p1}`. This helps translators (and the LLM) understand the context.
-- **Avoid Constructing Sentences with Variables:** Do not concatenate translations to form sentences. Instead, create a complete sentence with variables. Many languages have different sentence structures, and concatenation can lead to grammatically incorrect translations.
-
-  - **❌ Incorrect:** `"You have" + " " + itemCount + " " + "items"`
-  - **✅ Correct:** `"You have {itemCount} items in your cart."`
 
 
 ## Pluralization
 
-Pluralization is one of the most complex parts of internationalization, as different languages have different plural rules. `i18n-llm` simplifies this by using the ICU Message Format standard for pluralization.
+`i18n-llm` handles pluralization with a streamlined approach. Instead of defining each plural form (like `one`, `other`) in the source schema, you simply flag a key as requiring pluralization. The LLM is then instructed to generate the appropriate forms for the target language based on a count parameter.
 
-To define pluralization rules, use a JSON object with the keys `one`, `other`, and optionally `zero`, `two`, `few`, `many`.
+### How to Define Pluralization
 
-**Pluralization Example:**
-
-```json
-{
-  "items_in_cart": {
-    "one": "You have 1 item in your cart.",
-    "other": "You have {itemCount} items in your cart."
-  }
-}
-```
-
-In this example:
-- The `one` key is used when `itemCount` is 1.
-- The `other` key is used for all other cases (in English).
-
-### Advanced Plural Rules
-
-Some languages, such as Polish or Russian, have more complex plural rules. `i18n-llm` supports all categories from the CLDR (Unicode Common Locale Data Repository) standard.
-
-**Example with `few` and `many` (for Slavic languages):**
-
-```json
-{
-  "files_count": {
-    "one": "{count} plik",
-    "few": "{count} pliki",
-    "many": "{count} plików"
-  }
-}
-```
-
-`i18n-llm` will use the context of the target language to choose the correct plural form during translation.
-
-### Best Practices for Pluralization
-
-- **Always Provide `one` and `other`:** These are the minimum categories for most languages.
-- **Use `{count}` as the Default Variable:** Standardize the count variable name to `{count}` to maintain consistency.
-- **Test with Different Numbers:** Check if your pluralization rules work for 0, 1, 2, 5, 10, etc.
-
-
-
-## Metadata for LLM Control
-
-To obtain high-quality translations, it is essential to provide context to the Large Language Model (LLM). `i18n-llm` allows you to add metadata to any schema key using special keys prefixed with `$`.
-
-This metadata is not part of the text to be translated but provides valuable instructions for the LLM.
-
-### `$description`: Providing Context
-
-The `$description` key is used to describe where and how the text is used in your application. This helps the LLM understand the context and generate a more appropriate translation.
+To enable pluralization for a key, set `pluralization` to `true` and define the counting parameter in the `params` object.
 
 **Example:**
 
 ```json
-{
-  "save_button": {
-    "$description": "A button label for saving user settings. Keep it short and actionable.",
-    "value": "Save"
-  }
-}
-```
-
-In this case, the description informs the LLM that "Save" is a button label, which will lead it to choose a concise and imperative translation, such as "Salvar" in Portuguese or "Guardar" in Spanish, instead of a longer translation.
-
-### `$maxLen`: Restricting Translation Length
-
-The `$maxLen` key defines a maximum character length for the translated text. This is extremely useful for user interface elements with limited space, such as buttons, titles, or notifications.
-
-**Example:**
-
-```json
-{
-  "new_feature_notification": {
-    "$description": "A short notification title about a new feature.",
-    "$maxLen": 20,
-    "value": "New Feature Available!"
-  }
-}
-```
-
-`i18n-llm` will instruct the LLM to generate a translation that does not exceed 20 characters, preventing the text from breaking or overflowing in the interface.
-
-### `$examples`: Providing Translation Examples
-
-The `$examples` key allows you to provide one or more translation examples to guide the LLM's style, tone, and terminology. This is useful for ensuring consistency with other parts of your application or for following a specific style guide.
-
-**Example:**
-
-```json
-{
-  "delete_confirmation": {
-    "$description": "A confirmation message before deleting an item.",
-    "$examples": [
-      {
-        "pt-BR": "Confirmar exclusão?",
-        "es-ES": "¿Confirmar eliminación?"
-      }
-    ],
-    "value": "Confirm deletion?"
-  }
-}
-```
-
-By providing examples, you train the LLM to follow the desired pattern, resulting in more predictable and high-quality translations.
-
-
-_continuation_of_previous_thought_
-
-## Best Practices for a Robust Schema
-
-1.  **Use Descriptive Keys:** `user_profile_save_button` is better than `btn_1`. This makes the schema self-documenting.
-
-2.  **Organize with Nesting:** Group texts by feature or component to make navigation and maintenance easier.
-
-3.  **Provide Context with `$description`:** Never underestimate the power of context. The more information you provide, the better the translation will be.
-
-4.  **Use `$maxLen` for UI:** Avoid layout issues in the user interface by setting length constraints for texts in buttons, menus, and other elements with limited space.
-
-5.  **Don't Split Sentences:** Keep complete sentences in a single key. Grammatical structure varies between languages, and concatenating text fragments almost always leads to errors.
-
-6.  **Standardize Variables:** Use a consistent pattern for variable names, such as `{camelCase}`.
-
-7.  **Leverage Pluralization:** Use the pluralization feature for all texts that depend on a count, instead of creating conditional logic in your code.
-
-## Complete Schema Example
-
-Below is an example of an `i18n.schema.json` file that combines all the concepts covered in this guide.
-
-```json
-{
-  "global": {
-    "app_title": {
-      "$description": "The main title of the application, used in the browser tab.",
-      "$maxLen": 30,
-      "value": "My Awesome App"
+"welcomeMessage": {
+  "description": "A welcome message that tells the user how many new messages they have. The number of new messages is a parameter.",
+  "pluralization": true,
+  "params": {
+    "count": {
+      "type": "number",
+      "description": "The number of new messages.",
+      "example": 5
     }
   },
-  "user_dashboard": {
-    "welcome_message": {
-      "$description": "A personalized greeting for the user on their dashboard.",
-      "value": "Welcome back, {userName}!"
-    },
-    "unread_notifications": {
-      "$description": "A message indicating the number of unread notifications.",
-      "one": "You have 1 unread notification.",
-      "other": "You have {count} unread notifications."
-    },
-    "buttons": {
-      "view_profile": {
-        "$description": "A button that navigates to the user's profile page.",
-        "$maxLen": 15,
-        "value": "View Profile"
-      },
-      "logout": {
-        "$description": "A button to log the user out.",
-        "$examples": [
-          {
-            "de": "Abmelden",
-            "fr": "Déconnexion"
-          }
-        ],
-        "value": "Logout"
-      }
+  "category": "greeting_text"
+}
+```
+
+### Generated Output
+
+When `i18n-llm` processes this key, it will instruct the LLM to generate a pluralization structure in the output JSON files. The standard structure uses keys like `=0`, `=1`, and `>1` to handle zero, singular, and plural cases, respectively.
+
+**Example Output (`pt-BR.json` with the Pirate persona):**
+
+```json
+{
+  "dashboard": {
+    "welcomeMessage": {
+      "=0": "Você não tem novas mensagens, marujo!",
+      "=1": "Você tem 1 nova mensagem, capitão!",
+      ">1": "Você tem {count} novas mensagens, marujo!"
     }
   }
 }
 ```
+
+This approach simplifies the source schema while leveraging the LLM's linguistic capabilities to handle the specific pluralization rules of each target language automatically.
 
